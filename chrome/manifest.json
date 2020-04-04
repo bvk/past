@@ -1,0 +1,33 @@
+{
+  "name": "Password-Store Extension",
+  "version": "0.2",
+  "manifest_version": 2,
+  "description": "A browser extension for Password-Store.",
+  "icons": {
+    "18": "icons/logo18dp.png",
+    "24": "icons/logo24dp.png",
+    "36": "icons/logo36dp.png",
+    "48": "icons/logo48dp.png"
+  },
+  "browser_action": {
+    "browser_style": true,
+    "default_popup": "main.html",
+    "default_icon": {
+      "18": "icons/logo18dp.png",
+      "24": "icons/logo24dp.png",
+      "36": "icons/logo36dp.png",
+      "48": "icons/logo48dp.png"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "tabs"
+  ]
+}

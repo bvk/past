@@ -1,0 +1,64 @@
+body {
+		line-height: 1.6;
+		min-width: 20em;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+		background: lightgray;
+}
+li:nth-child(even) {
+		background: darkgray;
+}
+
+.material-icons {
+		padding: 0.2em;
+}
+
+.header {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+}
+
+.footer {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+		min-height: 2em;
+}
+
+.operation-status {
+		flex-grow: 1;
+		text-align: center;
+}
+
+.copy-button:hover {
+		background: gray;
+}
+
+.search-bar {
+		margin: 0.5em;
+		padding: 0.2em;
+		line-height: 1.6;
+		flex-grow: 1;
+}
+
+.recent-list-item {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+		padding: 0.5em;
+}
+
+.recent-password-name {
+		flex-grow: 1;
+}
