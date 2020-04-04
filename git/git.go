@@ -48,7 +48,7 @@ func (g *Dir) ListFiles() ([]string, error) {
 func (g *Dir) AddFile(path string, data []byte, mode os.FileMode) (status error) {
 	file := filepath.Join(g.dir, path)
 	if _, err := os.Stat(file); err == nil {
-		return xerrors.Errorf("target path %q already exists: %w", path, os.ErrInvalid)
+		return xerrors.Errorf("target path %q already exists: %w", path, os.ErrExist)
 	}
 	if err := ioutil.WriteFile(file, data, mode); err != nil {
 		return xerrors.Errorf("could not create file %q: %w", err)

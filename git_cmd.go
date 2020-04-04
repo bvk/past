@@ -11,7 +11,7 @@ import (
 )
 
 var gitCmd = &cobra.Command{
-	Use:   "git [flags] cmds [git-flags]",
+	Use:   "git [flags] -- cmds [git-flags]",
 	Short: "Runs git(1) command on the password-store repository.",
 	RunE:  cmdGit,
 }

@@ -32,12 +32,14 @@ chrome web store URL where users can install the extension.
 USAGE
 -----
 
-Past is similar to `pass`, but is not drop-in replacement. The following
+Past is similar to `pass`, but is not a drop-in replacement. The following
 subcommands are supported.
 
 ```
   edit        Updates an existing password-file with external editor.
   generate    Inserts a new password-file with an auto-generated password.
+  git         Runs git(1) command on the password-store repository.
+  import      Imports passwords from other password managers' data files.
   init        Creates or re-encrypts a password-store with GPG keys.
   insert      Inserts a password to the in a new password-file.
   install     Installs the backend for browser extension.
@@ -45,12 +47,11 @@ subcommands are supported.
   list        Prints the names of all password-files.
   scan        Decrypts all files to search for a string or regexp.
   show        Decrypts a password-file and prints it's content.
-  git         Runs git(1) command on the password-store repository.
 ```
 
-Browser extension is designed to be as minimal as possible. Users cannot create new
-password-store entries through the extension, but can only copy the password to
-the clipboard -- which is cleared after 10 seconds.
+Browser extension is designed to be as minimal as possible. As of now, users
+cannot create password-stores or new entries using the extension, but can only
+copy the passwords to the clipboard -- which are cleared after 10 seconds.
 
 SCREENSHOT
 ----------

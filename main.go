@@ -44,6 +44,7 @@ func doMain(ctx context.Context) error {
 	mainCmd.AddCommand(keysCmd)
 	mainCmd.AddCommand(showCmd)
 	mainCmd.AddCommand(installCmd)
+	mainCmd.AddCommand(importCmd)
 
 	mainCmd.SilenceUsage = true
 	mainCmd.SilenceErrors = true
