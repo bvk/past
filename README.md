@@ -47,3 +47,12 @@ subcommands are supported.
   show        Decrypts a password-file and prints it's content.
   git         Runs git(1) command on the password-store repository.
 ```
+
+Browser extension is designed to be as minimal as possible. Users cannot create new
+password-store entries through the extension, but can only copy the password to
+the clipboard -- which is cleared after 10 seconds.
+
+SCREENSHOT
+----------
+
+![Extension Popup](extras/screenshot.png?raw=true)
