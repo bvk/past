@@ -15,7 +15,7 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Prints the names of all password files.",
+	Short: "Prints the names of all password-files.",
 	RunE:  cmdList,
 }
 

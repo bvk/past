@@ -19,7 +19,7 @@ import (
 
 var keysCmd = &cobra.Command{
 	Use:   "keys [flags]",
-	Short: "Prints GPG public keys information from the keyring.",
+	Short: "Prints GPG public keys information.",
 	RunE:  cmdKeys,
 }
 

@@ -15,13 +15,12 @@ import (
 
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
+	"github.com/spf13/pflag"
 
-	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 )
 
-func cmdChrome(cmd *cobra.Command, args []string) error {
-	flags := cmd.Flags()
+func cmdChrome(flags *pflag.FlagSet, args []string) error {
 	dataDir, err := flags.GetString("data-dir")
 	if err != nil {
 		return xerrors.Errorf("could not get --data-dir value: %w", err)

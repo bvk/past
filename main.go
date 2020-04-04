@@ -20,15 +20,17 @@ func main() {
 }
 
 func doMain(ctx context.Context) error {
-	flags := mainCmd.Flags()
+	flags := mainCmd.PersistentFlags()
 	flags.String("data-dir", filepath.Join(os.Getenv("HOME"), ".password-store"),
 		"Data directory for the password store.")
 
 	// If this program is invoked by chrome extension, just execute the chrome handler.
 	if len(os.Args) == 2 {
-		extensionArg := fmt.Sprintf("chrome-extension://%s", ExtensionID)
-		if strings.HasPrefix(os.Args[1], extensionArg) {
-			return cmdChrome(mainCmd, os.Args[1:])
+		for _, extID := range ExtensionIDs {
+			extensionArg := fmt.Sprintf("chrome-extension://%s", extID)
+			if strings.HasPrefix(os.Args[1], extensionArg) {
+				return cmdChrome(flags, os.Args[1:])
+			}
 		}
 	}
 
