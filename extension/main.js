@@ -75,7 +75,7 @@ function onGetPersistentState(result) {
 
   // Remove deleted password files from the fileCountMap.
   for (let key in persistentState.fileCountMap) {
-    if (!key in files) {
+    if (!(key in files)) {
       delete persistentState.fileCountMap[key];
     }
   }
