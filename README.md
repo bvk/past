@@ -3,17 +3,21 @@ OVERVIEW
 
 This package reimplements the password-store management command `pass` under a
 new name `past`. Additionally, it comes with in-built support for a browser
-extension for Google Chrome. As of now, only GNU/Linux is supported.
+extension for Google Chrome or Chromium. As of now, only Mac OS X and GNU/Linux
+are supported.
 
-You should already be a password-store user to use this package; otherwise, the
-functionality provided in this package is of no use to you. See
-passwordstore.org to learn more.
+You should already be a password-store user to use this package; otherwise,
+functionality provided in this package may not be useful to you. See
+[passwordstore.org](https://passwordstore.org) to learn about password-store.
 
 DEPENDENCIES
 ------------
 
 Past requires `git` and `gpg` tools for normal operations. You need to have
 `go` version `1.12` or above for installation.
+
+Please make sure that `git` and `gpg` tools are available in one of the default
+`PATH` directories (`/bin:/usr/bin:/usr/local/bin`).
 
 INSTALLATION
 ------------
@@ -25,7 +29,7 @@ $ go get github.com/bvk/past
 $ ~/go/bin/past install
 ```
 
-First command compiles and installs the `past` command-line tool and second
+First command compiles and installs the `past` command-line tool, and second
 command configures the backend necessary for browser extension and opens the
 chrome web store URL where users can install the extension.
 
@@ -51,7 +55,8 @@ subcommands are supported.
 
 Browser extension is designed to be as minimal as possible. As of now, users
 cannot create password-stores or new entries using the extension, but can only
-copy the passwords to the clipboard -- which are cleared after 10 seconds.
+copy passwords to the clipboard. They are cleared after 10 seconds
+automatically.
 
 SCREENSHOT
 ----------

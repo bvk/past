@@ -21,6 +21,13 @@ import (
 )
 
 func cmdChrome(flags *pflag.FlagSet, args []string) error {
+	// When invoked by chrome, PATH may not be the same, so fix it to a known
+	// good defaults. For example, gpg command from GPGTools package in Mac OS X
+	// is installed into /usr/local/bin directory, but it is not part of the PATH
+	// when chrome extension invokes this program.
+	homeBin := filepath.Join(os.Getenv("HOME"), "bin")
+	os.Setenv("PATH", homeBin+":/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin")
+
 	dataDir, err := flags.GetString("data-dir")
 	if err != nil {
 		return xerrors.Errorf("could not get --data-dir value: %w", err)
@@ -121,7 +128,6 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	if _, err := os.Stdout.Write(respBytes); err != nil {
 		return xerrors.Errorf("could not write response bytes: %w", err)
 	}
-	log.Printf("response -> %q", respBytes)
 	return nil
 }
 
