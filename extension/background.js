@@ -12,6 +12,12 @@ function viewFile(req, callback) {
   });
 }
 
+function addFile(req, callback) {
+  chrome.runtime.sendNativeMessage('github.bvk.past', req, function(resp) {
+    callback(resp);
+  });
+}
+
 function setLocalStorage(state, callback) {
   chrome.storage.local.set(state, callback);
 }

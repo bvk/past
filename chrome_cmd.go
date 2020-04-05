@@ -43,14 +43,20 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 	if err != nil {
 		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
 	}
+	pstore, err := NewPasswordStore(store, keyring)
+	if err != nil {
+		return xerrors.Errorf("could not create password-store instance: %w", err)
+	}
 	h := ChromeHandler{
 		store:   store,
 		keyring: keyring,
+		pstore:  pstore,
 	}
 	return h.ServeChrome(context.Background(), os.Stdin, os.Stdout)
 }
 
 type ChromeRequest struct {
+	AddFile   *AddFileRequest   `json:"add_file"`
 	ListFiles *ListFilesRequest `json:"list_files"`
 	ViewFile  *ViewFileRequest  `json:"view_file"`
 }
@@ -60,6 +66,7 @@ type ChromeResponse struct {
 	// on success.
 	Status string `json:"status"`
 
+	AddFile   *AddFileResponse   `json:"add_file"`
 	ListFiles *ListFilesResponse `json:"list_files"`
 	ViewFile  *ViewFileResponse  `json:"view_file"`
 }
@@ -69,6 +76,17 @@ type ListFilesRequest struct {
 
 type ListFilesResponse struct {
 	Files []string `json:"files"`
+}
+
+type AddFileRequest struct {
+	File     string      `json:"file"`
+	Password string      `json:"password"`
+	Username string      `json:"username"`
+	Sitename string      `json:"sitename"`
+	Rest     [][2]string `json:"rest"`
+}
+
+type AddFileResponse struct {
 }
 
 type ViewFileRequest struct {
@@ -83,6 +101,7 @@ type ViewFileResponse struct {
 type ChromeHandler struct {
 	store   *git.Dir
 	keyring *gpg.Keyring
+	pstore  *PasswordStore
 }
 
 func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) error {
@@ -104,6 +123,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 
 	var resp ChromeResponse
 	switch {
+	case req.AddFile != nil:
+		resp.AddFile = new(AddFileResponse)
+		if err := c.doAddFile(ctx, req.AddFile, resp.AddFile); err != nil {
+			resp.Status = err.Error()
+		}
 	case req.ListFiles != nil:
 		resp.ListFiles = new(ListFilesResponse)
 		if err := c.doListFiles(ctx, req.ListFiles, resp.ListFiles); err != nil {
@@ -127,6 +151,25 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	}
 	if _, err := os.Stdout.Write(respBytes); err != nil {
 		return xerrors.Errorf("could not write response bytes: %w", err)
+	}
+	return nil
+}
+
+func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp *AddFileResponse) error {
+	var rest = [][2]string{
+		[2]string{"user", req.Username},
+		[2]string{"site", req.Sitename},
+	}
+	for _, other := range req.Rest {
+		rest = append(rest, other)
+	}
+
+	if strings.Contains(req.File, "/") {
+		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
+	}
+
+	if err := c.pstore.AddPasswordFile(req.File, req.Password, rest); err != nil {
+		return xerrors.Errorf("could not add new file: %w", err)
 	}
 	return nil
 }

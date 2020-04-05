@@ -6,57 +6,119 @@
 	</head>
 	<body>
 
-		<div class="search-page">
+		<div id="search-page">
 			<div class="header">
+				<button class="add-button material-icons">add</button>
 				<input class="search-bar" type="text" placeholder="What are you looking for?"></input>
+				<button class="add-button material-icons">add</button>
 			</div>
 
-			<ul>
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
+			<hr/>
 
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
+			<div class="content">
+				<ul>
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
 
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
 
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
 
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
 
-				<li>
-					<div class="recent-list-item">
-						<span class="recent-password-name"></span>
-						<button type="button" class="copy-button material-icons">content_copy</button>
-					</div>
-				</li>
-			</ul>
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
+
+					<li>
+						<div class="row">
+							<span class="column-elastic search-page-password-name"></span>
+							<button class="column copy-button material-icons">content_copy</button>
+						</div>
+					</li>
+				</ul>
+			</div>
 
 			<div class="footer">
-				<div class="operation-status">backend is not ready</div>
+				<div class="footer-status">backend is not ready</div>
+			</div>
+		</div>
+
+		<!-- add password page -->
+
+		<div id="add-page" style="display: none">
+			<div class="header">
+				<button class="material-icons add-page-back-button">navigate_before</button>
+				<span class="header-title"><center>New Password</center></span>
+				<button class="material-icons add-page-done-button" disabled>done</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<div>
+					<div class="row">
+						<div class="column-elastic" style="width:6em">Website</div>
+						<input class="column-elastic add-page-sitename" type="text" placeholder="website name"></input>
+					</div>
+
+					<div class="row">
+						<span class="column-elastic" style="width:6em">Username</span>
+						<input class="column-elastic add-page-username" type="text" placeholder="account name"></input>
+					</div>
+
+					<div class="row">
+						<span class="column-elastic">Password</span>
+						<select class="column-elastic add-page-password-type">
+							<option value="">User Typed Password</option>
+							<option value="letters_numbers_symbols">Letters, Numbers, Symbols</option>
+							<option value="letters_numbers">Letters, Numbers</option>
+							<option value="numbers">Numbers</option>
+							<option value="letters">Letters</option>
+							<option value="base64std">Standard Base64</option>
+						</select>
+						<span class="column add-page-password-size" style="text-decoration: line-through">12 Runes</span>
+					</div>
+
+					<div class="row">
+						<input class="column-elastic password-element add-page-password" type="password" placeholder="password"></input>
+						<input class="column-elastic password-element add-page-repeat-password" type="password" placeholder="retype password"></input>
+						<button class="column material-icons add-page-password-toggle">visibility_off</button>
+						<button class="column material-icons add-page-password-copy" disabled>content_copy</button>
+						<button class="column material-icons add-page-password-generate" disabled>cached</button>
+					</div>
+
+					<div>Other data</div>
+					<div class="row">
+						<textarea class="column-elastic add-page-data" style="flex-grow: 1"></textarea>
+					</div>
+				</div>
+			</div>
+
+			<div class="footer">
+				<div class="footer-status"></div>
 			</div>
 		</div>
 

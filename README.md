@@ -54,11 +54,12 @@ subcommands are supported.
 ```
 
 Browser extension is designed to be as minimal as possible. As of now, users
-cannot create password-stores or new entries using the extension, but can only
-copy passwords to the clipboard. They are cleared after 10 seconds
-automatically.
+cannot create or configure a password-store, but can add new entries and can
+copy passwords to the clipboard. Passwords copied into the clipboard are
+cleared after 10 seconds automatically.
 
-SCREENSHOT
-----------
+SCREENSHOTS
+-----------
 
-![Extension Popup](extras/screenshot.png?raw=true)
+![Search Passwords Page](extras/search-passwords.png?raw=true)
+![Add  Password Page](extras/add-password.png?raw=true)
