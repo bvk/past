@@ -240,7 +240,11 @@ function onViewFileResponse(req, resp) {
     return;
   }
 
-  if (backgroundPage.copyPassword(resp.view_file.password)) {
+  let whenCleared = function() {
+    setOperationStatus("Password is cleared from the clipboard.");
+  };
+
+  if (backgroundPage.copyPassword(resp.view_file.password, whenCleared)) {
     setOperationStatus("Password is copied to the clipboard.");
   } else {
     setOperationStatus("Cloud not copy Password to the clipboard.");

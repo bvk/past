@@ -20,7 +20,9 @@ function getLocalStorage(keys, callback) {
   chrome.storage.local.get(keys, callback);
 }
 
-function copyPassword(password) {
+// copyPassword writes the password into the clipboard for 10 seconds and
+// invokes the callback when password is cleared from the clipboard.
+function copyPassword(password, callback) {
   // See https://htmldom.dev/copy-text-to-the-clipboard
 
   // Create a fake textarea
@@ -57,11 +59,15 @@ function copyPassword(password) {
     document.body.removeChild(textAreaEle);
   }
 
-  // Schedule a callback to clear the password.
+  // Schedule a callback to clear the password. FIXME: Scheduled callback
+  // clears the clipboard content without checking if it was actually our
+  // content.
   if (password != "*") {
     setTimeout(function() {
-      copyPassword("*");
+      copyPassword("*", callback);
     }, 10*1000);
+  } else {
+    callback();
   }
   return true
 }
