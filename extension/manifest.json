@@ -1,6 +1,6 @@
 {
   "name": "Password-Store Extension",
-  "version": "0.2",
+  "version": "0.3",
   "manifest_version": 2,
   "description": "A browser extension for Password-Store.",
   "icons": {

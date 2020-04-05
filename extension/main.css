@@ -16,6 +16,15 @@ li:nth-child(even) {
 		background: darkgray;
 }
 
+button {
+		border: none;
+		background-color: transparent;
+}
+
+button:not(:disabled):hover {
+		background: gray;
+}
+
 .material-icons {
 		padding: 0.2em;
 }
@@ -38,10 +47,6 @@ li:nth-child(even) {
 .operation-status {
 		flex-grow: 1;
 		text-align: center;
-}
-
-.copy-button:hover {
-		background: gray;
 }
 
 .search-bar {

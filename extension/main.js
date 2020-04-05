@@ -275,6 +275,7 @@ function clearRecentListItems() {
   var elems = document.getElementsByClassName("recent-password-name");
   for (let i = 0; i < elems.length; i++) {
     elems[i].textContent = "";
+    elems[i].nextElementSibling.disabled = true;
   }
 }
 
@@ -283,9 +284,10 @@ function setRecentListItems(names) {
   for (let i = 0; i < elems.length; i++) {
     if (i < names.length) {
       elems[i].textContent = names[i];
+      elems[i].nextElementSibling.disabled = false;
     } else {
-      // TODO: We could change the button to disabled color.
       elems[i].textContent = "";
+      elems[i].nextElementSibling.disabled = true;
     }
   }
 }
