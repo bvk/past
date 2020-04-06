@@ -192,6 +192,14 @@ function onAddPageDisplay(page) {
   }
 }
 
+function onAddPageSitenameChange(page, sitenameInput) {
+  autoAddPageDoneButton(page);
+}
+
+function onAddPageUsernameChange(page, usernameInput) {
+  autoAddPageDoneButton(page);
+}
+
 function onAddPageBackButton(page, backButton) {
   let searchPage = showPage("search-page");
   onSearchPageDisplay(searchPage);
@@ -207,7 +215,7 @@ function onAddPageDoneButton(page, doneButton) {
   let password = getAddPagePassword(page);
   let moredata = page.getElementsByClassName("")[0];
 
-  if (password == "" || username == "" || sitename == "") {
+  if (password == "" || username.value == "" || sitename.value == "") {
     return;
   }
 
@@ -296,7 +304,7 @@ function autoAddPageDoneButton(page, doneButton) {
   let password = getAddPagePassword(page);
 
   let disable = false;
-  if (password == "" || username == "" || sitename == "") {
+  if (password == "" || username.value == "" || sitename.value == "") {
     disable = true;
   }
 
@@ -736,6 +744,16 @@ function createAddPage(page) {
   let doneButton = page.getElementsByClassName("add-page-done-button")[0];
   doneButton.addEventListener("click", function() {
     onAddPageDoneButton(page, doneButton);
+  });
+
+  let sitename = page.getElementsByClassName("add-page-sitename")[0];
+  sitename.addEventListener("input", function() {
+    onAddPageSitenameChange(page, sitename);
+  });
+
+  let username = page.getElementsByClassName("add-page-username")[0];
+  username.addEventListener("input", function() {
+    onAddPageUsernameChange(page, username);
   });
 
   let pass = page.getElementsByClassName("add-page-password")[0];
