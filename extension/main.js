@@ -1,5 +1,9 @@
 'use strict';
 
+//
+// Startup functions
+//
+
 let activeTab;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -21,8 +25,6 @@ function onActiveTabReady() {
 }
 
 function onBackgroundPageReady() {
-  createPages();
-
   // Issue a backend request through background.js so it won't be canceled in
   // the middle when gpg askpass window makes the chrome popup to disappear.
   let req = { list_files: {} }
@@ -84,8 +86,8 @@ function onGetPersistentState(result) {
 
   console.log("loaded state", persistentState, passwordFiles);
 
-  let page = showPage("search-page");
-  onSearchPageDisplay(page);
+  let searchPage = createSearchPage();
+  showPage(searchPage, "search-page", onSearchPageDisplay);
 }
 
 //
@@ -94,7 +96,7 @@ function onGetPersistentState(result) {
 
 function onSearchPageDisplay(page) {
   setOperationStatus("Backend is ready.");
-  setSearchPageRecentListItems(orderPasswordFiles(""));
+  setSearchPageRecentListItems(page, orderPasswordFiles(""));
 
   var searchBars = page.getElementsByClassName("search-bar");
   if (searchBars) {
@@ -102,27 +104,27 @@ function onSearchPageDisplay(page) {
   }
 }
 
-function onSearchPageSearchBar(elem) {
-  let files = orderPasswordFiles(elem.value);
-  setSearchPageRecentListItems(files);
+function onSearchPageSearchBar(page, searchInput) {
+  let files = orderPasswordFiles(searchInput.value);
+  setSearchPageRecentListItems(page, files);
 }
 
-function onSearchPageAddButton(elem) {
-  let addPage = showPage("add-page");
-  onAddPageDisplay(addPage);
+function onSearchPageAddButton(page, addButton) {
+  let addPage = createAddPage();
+  showPage(addPage, "add-page", onAddPageDisplay);
 }
 
-function onSearchPageCopyButton(elem) {
-  let name = elem.parentElement.childNodes[1].textContent;
+function onSearchPageCopyButton(page, copyButton) {
+  let name = copyButton.parentElement.childNodes[1].textContent;
   if (name) {
     let req = {view_file:{file:name}};
     backgroundPage.viewFile(req, function (resp) {
-      onSearchPageViewFileResponse(req, resp);
+      onSearchPageViewFileResponse(page, req, resp);
     });
   }
 }
 
-function onSearchPageViewFileResponse(req, resp) {
+function onSearchPageViewFileResponse(page, req, resp) {
   if (!resp) {
     setOperationStatus("Could not perform Copy password operation.");
     return;
@@ -148,7 +150,7 @@ function onSearchPageViewFileResponse(req, resp) {
   backgroundPage.setLocalStorage({"persistentState": persistentState});
 }
 
-function setSearchPageRecentListItems(names) {
+function setSearchPageRecentListItems(page, names) {
   var elems = document.getElementsByClassName("search-page-password-name");
   for (let i = 0; i < elems.length; i++) {
     if (i < names.length) {
@@ -201,15 +203,11 @@ function onAddPageUsernameChange(page, usernameInput) {
 }
 
 function onAddPageBackButton(page, backButton) {
-  let searchPage = showPage("search-page");
-  onSearchPageDisplay(searchPage);
+  let searchPage = createSearchPage();
+  showPage(searchPage, "search-page", onSearchPageDisplay);
 }
 
 function onAddPageDoneButton(page, doneButton) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
-
   let sitename = page.getElementsByClassName("add-page-sitename")[0];
   let username = page.getElementsByClassName("add-page-username")[0];
   let password = getAddPagePassword(page);
@@ -257,8 +255,8 @@ function onAddPageAddFileResponse(page, req, resp) {
   persistentState.fileCountMap[file] = 1;
   backgroundPage.setLocalStorage({"persistentState": persistentState});
 
-  let searchPage = showPage("search-page");
-  onSearchPageDisplay(searchPage);
+  let searchPage = createSearchPage();
+  showPage(searchPage, "search-page", onSearchPageDisplay);
 }
 
 function onAddPageCopyButton(page, copyButton) {
@@ -295,10 +293,6 @@ function onAddPageRepeatPasswordChange(page, repeat) {
 }
 
 function autoAddPageDoneButton(page, doneButton) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
-
   let sitename = page.getElementsByClassName("add-page-sitename")[0];
   let username = page.getElementsByClassName("add-page-username")[0];
   let password = getAddPagePassword(page);
@@ -326,9 +320,6 @@ function autoAddPageGenerateButton(page, generateButton) {
     disable = false;
   }
 
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
   if (!generateButton) {
     generateButton = page.getElementsByClassName("add-page-password-generate")[0];
   }
@@ -336,10 +327,6 @@ function autoAddPageGenerateButton(page, generateButton) {
 }
 
 function autoAddPageCopyButton(page, copyButton) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
-
   let disable = true;
   let password = getAddPagePassword(page);
   if (password != "") {
@@ -438,9 +425,6 @@ function onAddPagePasswordType(page, typeSelect) {
 }
 
 function currentAddPagePasswordType(page, typeSelect) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
   if (!typeSelect) {
     typeSelect = page.getElementsByClassName("add-page-password-type")[0];
   }
@@ -448,19 +432,12 @@ function currentAddPagePasswordType(page, typeSelect) {
 }
 
 function currentAddPagePasswordSize(page) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
   let size = page.getElementsByClassName("add-page-password-size")[0];
   let words = size.textContent.split(" ")
   return parseInt(words[0], 10);
 }
 
 function generateAddPagePassword(page) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
-
   let size = currentAddPagePasswordSize(page);
   let passType = currentAddPagePasswordType(page);
   if (passType == "") {
@@ -496,9 +473,6 @@ function generateAddPagePassword(page) {
 }
 
 function getAddPagePassword(page, pass, repeat) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
   if (!pass) {
     pass = page.getElementsByClassName("add-page-password")[0];
   }
@@ -512,10 +486,6 @@ function getAddPagePassword(page, pass, repeat) {
 }
 
 function setAddPagePassword(page, first, second) {
-  if (!page) {
-    page = document.getElementById("add-page");
-  }
-
   let pass = page.getElementsByClassName("add-page-password")[0];
   pass.value = first;
 
@@ -673,48 +643,22 @@ function setOperationStatus(message) {
 // Page functions
 //
 
-function showPage(name) {
-  let page = document.getElementById(name);
-  if (!page) {
-    return
-  }
-
-  for (let i = 0; i < pages.length; i++) {
-    if (pages[i] != name) {
-      document.getElementById(pages[i]).style.display = "none";
-    }
-  }
-
+function showPage(page, id, callback) {
+  page.id = id;
   page.style.display = "";
-  return page;
+  document.body.replaceChild(page, document.body.firstElementChild);
+  callback(page);
 }
 
-let pages = ["search-page", "add-page"]
+function createSearchPage() {
+  let searchPageTemplate = document.getElementById("search-page-template");
+  let page = searchPageTemplate.cloneNode(true);
 
-function createPages() {
-  for (let i = 0; i < pages.length; i++) {
-    let name = pages[i];
-    let page = document.getElementById(pages[i]);
-    if (!page) {
-      console.log("error: page element "+name+" not found");
-      continue;
-    }
-    if (name == "search-page") {
-      createSearchPage(page);
-    } else if (name == "add-page") {
-      createAddPage(page);
-    } else {
-      console.log("error: create page handle for "+name+" is not defined");
-    }
-  }
-}
-
-function createSearchPage(page) {
   let copyButtons = page.getElementsByClassName("copy-button");
   for (let i = 0; i < copyButtons.length; i++) {
     let button = copyButtons[i];
     button.addEventListener("click", function() {
-      onSearchPageCopyButton(button);
+      onSearchPageCopyButton(page, button);
     });
   }
 
@@ -722,20 +666,22 @@ function createSearchPage(page) {
   for (let i = 0; i < addButtons.length; i++) {
     let button = addButtons[i];
     button.addEventListener("click", function() {
-      onSearchPageAddButton(button);
+      onSearchPageAddButton(page, button);
     });
   }
 
-  let searchBars = page.getElementsByClassName("search-bar");
-  for (let i = 0; i < searchBars.length; i++) {
-    let bar = searchBars[i];
-    bar.addEventListener("input", function() {
-      onSearchPageSearchBar(bar);
-    });
-  }
+  let searchBar = page.getElementsByClassName("search-bar")[0];
+  searchBar.addEventListener("input", function() {
+    onSearchPageSearchBar(page, searchBar);
+  });
+
+  return page;
 }
 
-function createAddPage(page) {
+function createAddPage() {
+  let addPageTemplate = document.getElementById("add-page-template");
+  let page = addPageTemplate.cloneNode(true);
+
   let backButton = page.getElementsByClassName("add-page-back-button")[0];
   backButton.addEventListener("click", function() {
     onAddPageBackButton(page, backButton);
@@ -790,4 +736,6 @@ function createAddPage(page) {
   generateButton.addEventListener("click", function() {
     onAddPageGenerateButton(page, generateButton);
   });
+
+  return page;
 }
