@@ -26,9 +26,9 @@ function getLocalStorage(keys, callback) {
   chrome.storage.local.get(keys, callback);
 }
 
-// copyPassword writes the password into the clipboard for 10 seconds and
+// copyString writes the password into the clipboard for timeout seconds and
 // invokes the callback when password is cleared from the clipboard.
-function copyPassword(password, callback) {
+function copyString(password, timeout, callback) {
   // See https://htmldom.dev/copy-text-to-the-clipboard
 
   // Create a fake textarea
@@ -69,9 +69,11 @@ function copyPassword(password, callback) {
   // clears the clipboard content without checking if it was actually our
   // content.
   if (password != "*") {
-    setTimeout(function() {
-      copyPassword("*", callback);
-    }, 10*1000);
+    if (timeout && timeout > 0) {
+      setTimeout(function() {
+        copyString("*", 0, callback);
+      }, timeout*1000);
+    }
   } else {
     callback();
   }

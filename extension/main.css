@@ -73,6 +73,7 @@ button:not(:disabled):hover {
 .header-title {
 		padding: 0.2;
 		font-size: large;
+		text-align: center;
 }
 
 .content {

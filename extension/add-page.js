@@ -164,7 +164,7 @@ function onAddPageCopyButton(page, copyButton) {
     setOperationStatus("Password is cleared from the clipboard.");
   };
 
-  if (backgroundPage.copyPassword(password, whenCleared)) {
+  if (backgroundPage.copyString(password, 10, whenCleared)) {
     setOperationStatus("Password is copied to the clipboard.");
   } else {
     setOperationStatus("Cloud not copy the password to clipboard.");

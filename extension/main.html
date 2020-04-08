@@ -25,6 +25,7 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 
@@ -32,6 +33,7 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 
@@ -39,6 +41,7 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 
@@ -46,6 +49,7 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 
@@ -53,6 +57,7 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 
@@ -60,9 +65,50 @@
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
 							<button class="column search-page-copy-button material-icons">content_copy</button>
+							<button class="column search-page-view-button material-icons">navigate_next</button>
 						</div>
 					</li>
 				</ul>
+			</div>
+
+			<div class="row footer">
+				<div class="column-elastic footer-status">backend is not ready</div>
+			</div>
+		</div>
+
+		<!-- view detail page -->
+
+		<div id="view-page-template" style="display: none">
+			<div class="row header">
+				<button class="column material-icons view-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title view-page-file-name">Password File Name</span>
+				<button class="column material-icons view-page-edit-button">edit</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<div class="row">
+					<span class="column" style="width:6em">Username</span>
+					<input class="column-elastic view-page-username" readonly></input>
+					<button class="column material-icons view-page-username-copy">content_copy</button>
+				</div>
+
+				<div class="row">
+					<span class="column" style="width:6em">Password</span>
+					<input class="column-elastic view-page-password" type="password" readonly></input>
+					<button class="column material-icons view-page-password-toggle">visibility_off</button>
+					<button class="column material-icons view-page-password-copy">content_copy</button>
+				</div>
+
+				<div>Other data</div>
+
+				<div class="row view-page-key-value">
+					<input class="column view-page-key" style="width:5em; text-align:right" readonly></input>
+					<input class="column-elastic view-page-value" readonly></input>
+					<button class="column material-icons view-page-value-copy" disabled>content_copy</button>
+				</div>
+
 			</div>
 
 			<div class="row footer">
@@ -75,7 +121,7 @@
 		<div id="add-page-template" style="display: none">
 			<div class="row header">
 				<button class="column material-icons add-page-back-button">navigate_before</button>
-				<span class="column-elastic header-title"><center>New Password</center></span>
+				<span class="column-elastic header-title">New Password</span>
 				<button class="column material-icons add-page-done-button" disabled>done</button>
 			</div>
 
@@ -129,6 +175,7 @@
 		<script src="main.js"></script>
 		<script src="search-page.js"></script>
 		<script src="add-page.js"></script>
+		<script src="view-page.js"></script>
 
 	</body>
 </html>

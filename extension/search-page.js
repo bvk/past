@@ -12,6 +12,14 @@ function createSearchPage() {
     });
   }
 
+  let viewButtons = page.getElementsByClassName("search-page-view-button");
+  for (let i = 0; i < viewButtons.length; i++) {
+    let button = viewButtons[i];
+    button.addEventListener("click", function() {
+      onSearchPageViewButton(page, button);
+    });
+  }
+
   let addButtons = page.getElementsByClassName("search-page-add-button");
   for (let i = 0; i < addButtons.length; i++) {
     let button = addButtons[i];
@@ -49,30 +57,51 @@ function onSearchPageAddButton(page, addButton) {
 }
 
 function onSearchPageCopyButton(page, copyButton) {
-  let name = copyButton.parentElement.childNodes[1].textContent;
-  if (name) {
-    let req = {view_file:{file:name}};
-    backgroundPage.viewFile(req, function (resp) {
-      onSearchPageViewFileResponse(page, req, resp);
-    });
+  let name = copyButton.parentElement.firstElementChild.textContent;
+  if (!name) {
+    return;
   }
+
+  let req = {view_file:{file:name}};
+  backgroundPage.viewFile(req, function (resp) {
+    if (!resp) {
+      setOperationStatus("Could not perform Copy password operation.");
+      return;
+    }
+    if (resp.status != "") {
+      setOperationStatus("Copy password operation has failed ("+resp.status+").");
+      return;
+    }
+    onSearchPageViewFileResponseForCopy(page, req, resp);
+  });
 }
 
-function onSearchPageViewFileResponse(page, req, resp) {
-  if (!resp) {
-    setOperationStatus("Could not perform Copy password operation.");
-    return;
-  }
-  if (resp.status != "") {
-    setOperationStatus("Copy password operation has failed ("+resp.status+").");
+function onSearchPageViewButton(page, viewButton) {
+  let name = viewButton.parentElement.firstElementChild.textContent;
+  if (!name) {
     return;
   }
 
+  let req = {view_file:{file:name}};
+  backgroundPage.viewFile(req, function (resp) {
+    if (!resp) {
+      setOperationStatus("Could not perform view file operation.");
+      return;
+    }
+    if (resp.status != "") {
+      setOperationStatus("Copy password operation has failed ("+resp.status+").");
+      return;
+    }
+    onSearchPageViewFileResponseForViewPage(page, req, resp);
+  });
+}
+
+function onSearchPageViewFileResponseForCopy(page, req, resp) {
   let whenCleared = function() {
     setOperationStatus("Password is cleared from the clipboard.");
   };
 
-  if (backgroundPage.copyPassword(resp.view_file.password, whenCleared)) {
+  if (backgroundPage.copyString(resp.view_file.password, 10, whenCleared)) {
     setOperationStatus("Password is copied to the clipboard.");
   } else {
     setOperationStatus("Cloud not copy the password to clipboard.");
@@ -84,19 +113,25 @@ function onSearchPageViewFileResponse(page, req, resp) {
   backgroundPage.setLocalStorage({"persistentState": persistentState});
 }
 
+function onSearchPageViewFileResponseForViewPage(page, req, resp) {
+  let viewPage = createViewPage(req, resp);
+  showPage(viewPage, "view-page", onViewPageDisplay);
+}
+
 function setSearchPageRecentListItems(page, names) {
   var elems = document.getElementsByClassName("search-page-password-name");
   for (let i = 0; i < elems.length; i++) {
+    let name = "";
+    let disable = true;
     if (i < names.length) {
-      elems[i].textContent = names[i];
-      elems[i].nextElementSibling.disabled = false;
-    } else {
-      elems[i].textContent = "";
-      elems[i].nextElementSibling.disabled = true;
+      name = names[i];
+      disable = false;
     }
+    elems[i].textContent = name;
+    elems[i].nextElementSibling.disabled = disable;
+    elems[i].nextElementSibling.nextElementSibling.disabled = disable;
   }
 }
-
 
 //
 // Other functions
