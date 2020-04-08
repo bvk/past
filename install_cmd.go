@@ -19,7 +19,7 @@ import (
 
 var ExtensionIDs = []string{
 	"lpjgobmcekjengejhfbambleokkelpjb", // Chrome Web Store version.
-	"klnbabongmhnpiffdkadmanmcfcneacn", // Local developement version.
+	"ogoijmgpcpnebocggiecngklnlekohmo", // Local developement version.
 }
 
 // Mappings for native-messaging-hosts config file directory location (for
