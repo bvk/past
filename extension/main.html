@@ -11,10 +11,10 @@
 		<!-- search passwords page -->
 
 		<div id="search-page-template" style="display: none">
-			<div class="header">
-				<button class="add-button material-icons">add</button>
-				<input class="search-bar" type="text" placeholder="What are you looking for?"></input>
-				<button class="add-button material-icons">add</button>
+			<div class="row header">
+				<button class="column search-page-add-button material-icons">add</button>
+				<input class="column-elasitc search-page-search-bar" type="text" placeholder="What are you looking for?"></input>
+				<button class="column search-page-add-button material-icons">add</button>
 			</div>
 
 			<hr/>
@@ -24,59 +24,59 @@
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 
 					<li>
 						<div class="row">
 							<span class="column-elastic search-page-password-name"></span>
-							<button class="column copy-button material-icons">content_copy</button>
+							<button class="column search-page-copy-button material-icons">content_copy</button>
 						</div>
 					</li>
 				</ul>
 			</div>
 
-			<div class="footer">
-				<div class="footer-status">backend is not ready</div>
+			<div class="row footer">
+				<div class="column-elastic footer-status">backend is not ready</div>
 			</div>
 		</div>
 
 		<!-- add password page -->
 
 		<div id="add-page-template" style="display: none">
-			<div class="header">
-				<button class="material-icons add-page-back-button">navigate_before</button>
-				<span class="header-title"><center>New Password</center></span>
-				<button class="material-icons add-page-done-button" disabled>done</button>
+			<div class="row header">
+				<button class="column material-icons add-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title"><center>New Password</center></span>
+				<button class="column material-icons add-page-done-button" disabled>done</button>
 			</div>
 
 			<hr/>
@@ -121,12 +121,14 @@
 				</div>
 			</div>
 
-			<div class="footer">
-				<div class="footer-status"></div>
+			<div class="row footer">
+				<div class="column-elastic footer-status"></div>
 			</div>
 		</div>
 
 		<script src="main.js"></script>
+		<script src="search-page.js"></script>
+		<script src="add-page.js"></script>
 
 	</body>
 </html>

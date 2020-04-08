@@ -48,43 +48,6 @@ button:not(:disabled):hover {
 		padding: 0.2em;
 }
 
-.header {
-		margin: 0.2em;
-		padding: 0.2em;
-
-		display: flex;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		align-items: center;
-}
-
-.header-title {
-		flex-grow: 1;
-		padding: 0.2;
-		font-size: large;
-}
-
-.content {
-		margin: 0.2em;
-		padding: 0.2em;
-}
-
-.footer {
-		margin: 0.2em;
-		padding: 0.2em;
-
-		display: flex;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		align-items: center;
-		min-height: 2em;
-}
-
-.footer-status {
-		flex-grow: 1;
-		text-align: center;
-}
-
 .row {
 		display: flex;
 		flex-direction: row;
@@ -102,27 +65,29 @@ button:not(:disabled):hover {
 		margin: 0.2em;
 }
 
-/* search page */
-
-.search-bar {
-		flex-grow: 1;
-}
-
-.recent-list-item {
-		display: flex;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		align-items: center;
+.header {
+		margin: 0.2em;
 		padding: 0.2em;
 }
 
-.recent-password-name {
-		flex-grow: 1;
+.header-title {
+		padding: 0.2;
+		font-size: large;
 }
 
-/* add page */
+.content {
+		margin: 0.2em;
+		padding: 0.2em;
+}
 
-#add-page {
+.footer {
+		margin: 0.2em;
+		padding: 0.2em;
+		min-height: 2em;
+}
+
+.footer-status {
+		text-align: center;
 }
 
 .password-element {
