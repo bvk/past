@@ -57,6 +57,7 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 
 type ChromeRequest struct {
 	AddFile   *AddFileRequest   `json:"add_file"`
+	EditFile  *EditFileRequest  `json:"edit_file"`
 	ListFiles *ListFilesRequest `json:"list_files"`
 	ViewFile  *ViewFileRequest  `json:"view_file"`
 }
@@ -67,6 +68,7 @@ type ChromeResponse struct {
 	Status string `json:"status"`
 
 	AddFile   *AddFileResponse   `json:"add_file"`
+	EditFile  *EditFileResponse  `json:"edit_file"`
 	ListFiles *ListFilesResponse `json:"list_files"`
 	ViewFile  *ViewFileResponse  `json:"view_file"`
 }
@@ -89,13 +91,27 @@ type AddFileRequest struct {
 type AddFileResponse struct {
 }
 
+type EditFileRequest struct {
+	File     string `json:"file"`
+	OrigFile string `json:"orig_file"`
+
+	Password string `json:"password"`
+	Username string `json:"username"`
+	Sitename string `json:"sitename"`
+	Data     string `json:"data"`
+}
+
+type EditFileResponse struct {
+}
+
 type ViewFileRequest struct {
 	File string `json:"file"`
 }
 
 type ViewFileResponse struct {
-	Password string      `json:"password"`
-	Values   [][2]string `json:"values"`
+	Username      string      `json:"username"`
+	Password      string      `json:"password"`
+	KeyValuePairs [][2]string `json:"key_value_pairs"`
 }
 
 type ChromeHandler struct {
@@ -128,6 +144,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 		if err := c.doAddFile(ctx, req.AddFile, resp.AddFile); err != nil {
 			resp.Status = err.Error()
 		}
+	case req.EditFile != nil:
+		resp.EditFile = new(EditFileResponse)
+		if err := c.doEditFile(ctx, req.EditFile, resp.EditFile); err != nil {
+			resp.Status = err.Error()
+		}
 	case req.ListFiles != nil:
 		resp.ListFiles = new(ListFilesResponse)
 		if err := c.doListFiles(ctx, req.ListFiles, resp.ListFiles); err != nil {
@@ -157,8 +178,8 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 
 func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp *AddFileResponse) error {
 	var rest = [][2]string{
-		[2]string{"user", req.Username},
-		[2]string{"site", req.Sitename},
+		[2]string{"user", strings.TrimSpace(req.Username)},
+		[2]string{"site", strings.TrimSpace(req.Sitename)},
 	}
 	for _, other := range req.Rest {
 		rest = append(rest, other)
@@ -168,8 +189,48 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
 	}
 
-	if err := c.pstore.AddPasswordFile(req.File, req.Password, rest); err != nil {
+	if err := c.pstore.AddPasswordFile(strings.TrimSpace(req.File), req.Password, rest); err != nil {
 		return xerrors.Errorf("could not add new file: %w", err)
+	}
+	return nil
+}
+
+func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, resp *EditFileResponse) error {
+	var rest = [][2]string{
+		[2]string{"user", strings.TrimSpace(req.Username)},
+		[2]string{"site", strings.TrimSpace(req.Sitename)},
+	}
+	lines := strings.Split(req.Data, "\n")
+	for _, line := range lines {
+		line := strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		if i := strings.IndexRune(line, ':'); i != -1 {
+			key := strings.TrimSpace(line[:i])
+			value := strings.TrimSpace(line[i+1:])
+			if len(key) > 0 && len(value) > 0 {
+				rest = append(rest, [2]string{key, value})
+			}
+			continue
+		}
+		rest = append(rest, [2]string{strings.TrimSpace(line), ""})
+	}
+
+	if strings.Contains(req.File, "/") {
+		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
+	}
+
+	file := strings.TrimSpace(req.File)
+	if len(req.OrigFile) > 0 && req.OrigFile != req.File {
+		origFile := strings.TrimSpace(req.OrigFile)
+		if err := c.pstore.ReplacePasswordFile(origFile, file, req.Password, rest); err != nil {
+			return xerrors.Errorf("could not replace file %q: %w", origFile, err)
+		}
+	} else {
+		if err := c.pstore.UpdatePasswordFile(file, req.Password, rest); err != nil {
+			return xerrors.Errorf("could not update file %q: %w", req.File, err)
+		}
 	}
 	return nil
 }
@@ -202,7 +263,17 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 	if err != nil {
 		return xerrors.Errorf("could not decrypt login entry %q: %w", req.File, err)
 	}
-	resp.Password, resp.Values = parse(decrypted)
+	// Identify the username here, so that UI layer becomes easier.
+	password, kvs := parse(decrypted)
+	for _, kv := range kvs {
+		key := strings.ToLower(kv[0])
+		if len(resp.Username) == 0 && key == "username" || key == "user" || key == "login" {
+			resp.Username = kv[1]
+		} else {
+			resp.KeyValuePairs = append(resp.KeyValuePairs, kv)
+		}
+	}
+	resp.Password = password
 	return nil
 }
 
@@ -215,7 +286,9 @@ func parse(data []byte) (string, [][2]string) {
 	for ii := 1; ii < len(lines); ii++ {
 		s := string(lines[ii])
 		if colon := strings.IndexRune(s, ':'); colon >= 0 {
-			values = append(values, [2]string{s[:colon], s[colon+1:]})
+			key := strings.TrimSpace(s[:colon])
+			value := strings.TrimSpace(s[colon+1:])
+			values = append(values, [2]string{key, value})
 		}
 	}
 	password := strings.TrimSpace(string(lines[0]))

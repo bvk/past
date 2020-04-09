@@ -12,9 +12,7 @@
 
 		<div id="search-page-template" style="display: none">
 			<div class="row header">
-				<button class="column search-page-add-button material-icons">add</button>
-				<input class="column-elasitc search-page-search-bar" type="text" placeholder="What are you looking for?"></input>
-				<button class="column search-page-add-button material-icons">add</button>
+				<input class="column-elastic search-page-search-bar" type="text" placeholder="What are you looking for?"></input>
 			</div>
 
 			<hr/>
@@ -72,7 +70,9 @@
 			</div>
 
 			<div class="row footer">
+				<button class="column search-page-settings-button material-icons">settings</button>
 				<div class="column-elastic footer-status">backend is not ready</div>
+				<button class="column search-page-add-button material-icons">add</button>
 			</div>
 		</div>
 
@@ -81,8 +81,8 @@
 		<div id="view-page-template" style="display: none">
 			<div class="row header">
 				<button class="column material-icons view-page-back-button">navigate_before</button>
-				<span class="column-elastic header-title view-page-file-name">Password File Name</span>
-				<button class="column material-icons view-page-edit-button">edit</button>
+				<span class="column-elastic header-title view-page-filename">Password File Name</span>
+				<button class="column material-icons view-page-close-button">clear</button>
 			</div>
 
 			<hr/>
@@ -112,7 +112,9 @@
 			</div>
 
 			<div class="row footer">
+				<button class="column material-icons view-page-delete-button">delete</button>
 				<div class="column-elastic footer-status">backend is not ready</div>
+				<button class="column material-icons view-page-edit-button">edit</button>
 			</div>
 		</div>
 
@@ -172,9 +174,68 @@
 			</div>
 		</div>
 
+		<!-- edit password page -->
+
+		<div id="edit-page-template" style="display: none">
+			<div class="row header">
+				<button class="column material-icons edit-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title edit-page-title"></span>
+				<button class="column material-icons edit-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<div>
+					<div class="row">
+						<div class="column-elastic" style="width:6em">Website</div>
+						<input class="column-elastic edit-page-sitename" type="text" placeholder="website name"></input>
+					</div>
+
+					<div class="row">
+						<span class="column-elastic" style="width:6em">Username</span>
+						<input class="column-elastic edit-page-username" type="text" placeholder="account name"></input>
+					</div>
+
+					<div class="row">
+						<span class="column-elastic">Password</span>
+						<select class="column-elastic edit-page-password-type">
+							<option value="">User Typed Password</option>
+							<option value="letters_numbers_symbols">Letters, Numbers, Symbols</option>
+							<option value="letters_numbers">Letters, Numbers</option>
+							<option value="numbers">Numbers</option>
+							<option value="letters">Letters</option>
+							<option value="base64std">Standard Base64</option>
+						</select>
+						<span class="column edit-page-password-size" style="text-decoration: line-through">12 Runes</span>
+					</div>
+
+					<div class="row">
+						<input class="column-elastic password-element edit-page-password" type="password" placeholder="password"></input>
+						<input class="column-elastic password-element edit-page-repeat-password" type="password" placeholder="retype password"></input>
+						<button class="column material-icons edit-page-password-toggle">visibility_off</button>
+						<button class="column material-icons edit-page-password-copy" disabled>content_copy</button>
+						<button class="column material-icons edit-page-password-generate" disabled>cached</button>
+					</div>
+
+					<div>Other data</div>
+					<div class="row">
+						<textarea class="column-elastic edit-page-data" style="flex-grow: 1"></textarea>
+					</div>
+				</div>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons edit-page-undo-button">undo</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons edit-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
 		<script src="main.js"></script>
 		<script src="search-page.js"></script>
 		<script src="add-page.js"></script>
+		<script src="edit-page.js"></script>
 		<script src="view-page.js"></script>
 
 	</body>

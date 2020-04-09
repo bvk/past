@@ -3,6 +3,12 @@
 function createSearchPage() {
   let searchPageTemplate = document.getElementById("search-page-template");
   let page = searchPageTemplate.cloneNode(true);
+  page.setAttribute("page-params", "{}");
+
+  let searchBar = page.getElementsByClassName("search-page-search-bar")[0];
+  searchBar.addEventListener("input", function() {
+    onSearchPageSearchBar(page, searchBar);
+  });
 
   let copyButtons = page.getElementsByClassName("search-page-copy-button");
   for (let i = 0; i < copyButtons.length; i++) {
@@ -20,17 +26,14 @@ function createSearchPage() {
     });
   }
 
-  let addButtons = page.getElementsByClassName("search-page-add-button");
-  for (let i = 0; i < addButtons.length; i++) {
-    let button = addButtons[i];
-    button.addEventListener("click", function() {
-      onSearchPageAddButton(page, button);
-    });
-  }
+  let settingsButton = page.getElementsByClassName("search-page-settings-button")[0];
+  settingsButton.addEventListener("click", function() {
+    onSearchPageSettingsButton(page, settingsButton);
+  });
 
-  let searchBar = page.getElementsByClassName("search-page-search-bar")[0];
-  searchBar.addEventListener("input", function() {
-    onSearchPageSearchBar(page, searchBar);
+  let addButton = page.getElementsByClassName("search-page-add-button")[0];
+  addButton.addEventListener("click", function() {
+    onSearchPageAddButton(page, addButton);
   });
 
   return page;
@@ -49,11 +52,6 @@ function onSearchPageDisplay(page) {
 function onSearchPageSearchBar(page, searchInput) {
   let files = orderSearchPagePasswordFiles(searchInput.value);
   setSearchPageRecentListItems(page, files);
-}
-
-function onSearchPageAddButton(page, addButton) {
-  let addPage = createAddPage();
-  showPage(addPage, "add-page", onAddPageDisplay);
 }
 
 function onSearchPageCopyButton(page, copyButton) {
@@ -95,6 +93,16 @@ function onSearchPageViewButton(page, viewButton) {
     onSearchPageViewFileResponseForViewPage(page, req, resp);
   });
 }
+
+function onSearchPageSettingsButton(page, settingsButton) {
+  setOperationStatus("Settings page is not implemented yet.")
+}
+
+function onSearchPageAddButton(page, addButton) {
+  let editPage = createEditPage();
+  showPage(editPage, "edit-page", onEditPageDisplay);
+}
+
 
 function onSearchPageViewFileResponseForCopy(page, req, resp) {
   let whenCleared = function() {

@@ -18,6 +18,8 @@ type PasswordStore struct {
 	store   *git.Dir
 	keyring *gpg.Keyring
 
+	gitFiles []string
+
 	dirPubKeysMap map[string][]*gpg.PublicKey
 }
 
@@ -25,6 +27,9 @@ func NewPasswordStore(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, err
 	gitFiles, err := store.ListFiles()
 	if err != nil {
 		return nil, xerrors.Errorf("could not list files in the git directory: %w", err)
+	}
+	for i, file := range gitFiles {
+		gitFiles[i] = filepath.Clean(filepath.Join("./", file))
 	}
 
 	// Scan all git files to identify .gpg-id files for each directory.
@@ -67,13 +72,14 @@ func NewPasswordStore(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, err
 	ps := &PasswordStore{
 		store:         store,
 		keyring:       keyring,
+		gitFiles:      gitFiles,
 		dirPubKeysMap: dirPubKeysMap,
 	}
 	return ps, nil
 }
 
 func (ps *PasswordStore) AddPasswordFile(name, password string, rest [][2]string) (status error) {
-	file := filepath.Join("./", name+".gpg")
+	file := filepath.Clean(filepath.Join("./", name+".gpg"))
 	pkeys, err := ps.FileKeys(file)
 	if err != nil {
 		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
@@ -106,11 +112,12 @@ func (ps *PasswordStore) AddPasswordFile(name, password string, rest [][2]string
 	if err := ps.store.Commit(msg); err != nil {
 		return xerrors.Errorf("could not commit add file change: %w", err)
 	}
+	ps.gitFiles = append(ps.gitFiles, file)
 	return nil
 }
 
 func (ps *PasswordStore) UpdatePasswordFile(name, password string, rest [][2]string) (status error) {
-	file := filepath.Join("./", name+".gpg")
+	file := filepath.Clean(filepath.Join("./", name+".gpg"))
 	pkeys, err := ps.FileKeys(file)
 	if err != nil {
 		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
@@ -144,6 +151,73 @@ func (ps *PasswordStore) UpdatePasswordFile(name, password string, rest [][2]str
 		return xerrors.Errorf("could not commit update file change: %w", err)
 	}
 	return nil
+}
+
+func (ps *PasswordStore) ReplacePasswordFile(oldName, newName, password string, rest [][2]string) (status error) {
+	oldFile := filepath.Clean(filepath.Join("./", oldName+".gpg"))
+	if exists, err := ps.FileExists(oldFile); err != nil {
+		return xerrors.Errorf("could not determine if old file %q exists: %w", oldName, err)
+	} else if !exists {
+		return xerrors.Errorf("old file %q doesn't exist: %w", oldName, os.ErrNotExist)
+	}
+
+	newFile := filepath.Clean(filepath.Join("./", newName+".gpg"))
+	pkeys, err := ps.FileKeys(newFile)
+	if err != nil {
+		return xerrors.Errorf("could not find appropriate keys for file %q: %w", newName, err)
+	}
+
+	lines := []string{password}
+	for _, kv := range rest {
+		lines = append(lines, fmt.Sprintf("%s: %s", kv[0], kv[1]))
+	}
+	decrypted := []byte(strings.Join(lines, "\n") + "\n")
+
+	encrypted, err := ps.keyring.Encrypt(decrypted, pkeys)
+	if err != nil {
+		return xerrors.Errorf("could not encrypt new password: %w", err)
+	}
+
+	if err := ps.store.AddFile(newFile, encrypted, os.FileMode(0644)); err != nil {
+		return xerrors.Errorf("could not add file %q in git repo: %w", newFile, err)
+	}
+	defer func() {
+		if status != nil {
+			if err := ps.store.Reset("HEAD"); err != nil {
+				log.Panicf("could not undo adding file %q: %v", newFile, err)
+				return
+			}
+		}
+	}()
+
+	if err := ps.store.RemoveFile(oldFile); err != nil {
+		return xerrors.Errorf("could not remove file %q: %w", oldFile, err)
+	}
+
+	msg := fmt.Sprintf("Replaced %q with %q.", oldFile, newFile)
+	if err := ps.store.Commit(msg); err != nil {
+		return xerrors.Errorf("could not commit add file change: %w", err)
+	}
+
+	var gitFiles []string
+	for _, file := range ps.gitFiles {
+		if file == oldFile {
+			gitFiles = append(gitFiles, newFile)
+		} else {
+			gitFiles = append(gitFiles, file)
+		}
+	}
+	ps.gitFiles = gitFiles
+	return nil
+}
+
+func (ps *PasswordStore) FileExists(path string) (bool, error) {
+	for _, file := range ps.gitFiles {
+		if file == path {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (ps *PasswordStore) FileKeys(path string) ([]*gpg.PublicKey, error) {
