@@ -56,10 +56,11 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 }
 
 type ChromeRequest struct {
-	AddFile   *AddFileRequest   `json:"add_file"`
-	EditFile  *EditFileRequest  `json:"edit_file"`
-	ListFiles *ListFilesRequest `json:"list_files"`
-	ViewFile  *ViewFileRequest  `json:"view_file"`
+	AddFile    *AddFileRequest    `json:"add_file"`
+	EditFile   *EditFileRequest   `json:"edit_file"`
+	ListFiles  *ListFilesRequest  `json:"list_files"`
+	ViewFile   *ViewFileRequest   `json:"view_file"`
+	DeleteFile *DeleteFileRequest `json:"delete_file"`
 }
 
 type ChromeResponse struct {
@@ -67,10 +68,11 @@ type ChromeResponse struct {
 	// on success.
 	Status string `json:"status"`
 
-	AddFile   *AddFileResponse   `json:"add_file"`
-	EditFile  *EditFileResponse  `json:"edit_file"`
-	ListFiles *ListFilesResponse `json:"list_files"`
-	ViewFile  *ViewFileResponse  `json:"view_file"`
+	AddFile    *AddFileResponse    `json:"add_file"`
+	EditFile   *EditFileResponse   `json:"edit_file"`
+	ListFiles  *ListFilesResponse  `json:"list_files"`
+	ViewFile   *ViewFileResponse   `json:"view_file"`
+	DeleteFile *DeleteFileResponse `json:"delete_file"`
 }
 
 type ListFilesRequest struct {
@@ -112,6 +114,13 @@ type ViewFileResponse struct {
 	Username      string      `json:"username"`
 	Password      string      `json:"password"`
 	KeyValuePairs [][2]string `json:"key_value_pairs"`
+}
+
+type DeleteFileRequest struct {
+	File string `json:"file"`
+}
+
+type DeleteFileResponse struct {
 }
 
 type ChromeHandler struct {
@@ -157,6 +166,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	case req.ViewFile != nil:
 		resp.ViewFile = new(ViewFileResponse)
 		if err := c.doViewFile(ctx, req.ViewFile, resp.ViewFile); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.DeleteFile != nil:
+		resp.DeleteFile = new(DeleteFileResponse)
+		if err := c.doDeleteFile(ctx, req.DeleteFile, resp.DeleteFile); err != nil {
 			resp.Status = err.Error()
 		}
 	default:
@@ -274,6 +288,14 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 		}
 	}
 	resp.Password = password
+	return nil
+}
+
+func (c *ChromeHandler) doDeleteFile(ctx context.Context, req *DeleteFileRequest, resp *DeleteFileResponse) error {
+	file := filepath.Clean(filepath.Join("./", req.File+".gpg"))
+	if err := c.store.RemoveFile(file); err != nil {
+		return xerrors.Errorf("could not remove file %q: %w", file, err)
+	}
 	return nil
 }
 

@@ -133,7 +133,19 @@ function onViewPageValueCopyButton(page, copyButton) {
 }
 
 function onViewPageDeleteButton(page, deleteButton) {
-  setOperationStatus("Delete operation is not implemented yet.");
+  let title = page.getElementsByClassName("view-page-filename")[0]
+  let file = title.textContent;
+  let req = {delete_file:{file:file}};
+  callBackend(req, function(req, resp) {
+    onViewPageDeleteFileResponse(page, req, resp);
+  });
+}
+
+function onViewPageDeleteFileResponse(page, req, resp) {
+  setOperationStatus("File %q is removed successfully.");
+
+  let searchPage = createSearchPage();
+  showPage(searchPage, "search-page", onSearchPageDisplay);
 }
 
 function onViewPageEditButton(page, editButton) {
