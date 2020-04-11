@@ -61,15 +61,7 @@ function onSearchPageCopyButton(page, copyButton) {
   }
 
   let req = {view_file:{file:name}};
-  backgroundPage.viewFile(req, function (resp) {
-    if (!resp) {
-      setOperationStatus("Could not perform Copy password operation.");
-      return;
-    }
-    if (resp.status != "") {
-      setOperationStatus("Copy password operation has failed ("+resp.status+").");
-      return;
-    }
+  callBackend(req, function(req, resp) {
     onSearchPageViewFileResponseForCopy(page, req, resp);
   });
 }
@@ -81,15 +73,7 @@ function onSearchPageViewButton(page, viewButton) {
   }
 
   let req = {view_file:{file:name}};
-  backgroundPage.viewFile(req, function (resp) {
-    if (!resp) {
-      setOperationStatus("Could not perform view file operation.");
-      return;
-    }
-    if (resp.status != "") {
-      setOperationStatus("Copy password operation has failed ("+resp.status+").");
-      return;
-    }
+  callBackend(req, function(req, resp) {
     onSearchPageViewFileResponseForViewPage(page, req, resp);
   });
 }

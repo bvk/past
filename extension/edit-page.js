@@ -232,28 +232,18 @@ function onEditPageDoneButton(page, doneButton) {
   // TODO: Also add moredata to the rest.
 
   // Issue add-password request through the background page.
-  backgroundPage.addFile(req, function(resp) {
-    if (!req) {
-      return;
-    }
-    if (!resp) {
-      setOperationStatus("Could not issue add file request.");
-      return;
-    }
-    if (resp.status != "") {
-      setOperationStatus("Add file request has failed ("+resp.status+").");
-      return;
-    }
-    onEditPageAddFileResponse(page, req, resp);
+  callBackend(req, function(req, resp) {
+    onEditPageEditFileResponse(page, req, resp);
   });
 }
 
-function onEditPageAddFileResponse(page, req, resp) {
+function onEditPageEditFileResponse(page, req, resp) {
   if (req.add_file) {
     let file = req.add_file.file;
     passwordFiles.push(file);
     persistentState.fileCountMap[file] = 1;
     backgroundPage.setLocalStorage({"persistentState": persistentState});
+    // FIXME: We should call list-files in createSearchPage operation.
   }
 
   let searchPage = createSearchPage();

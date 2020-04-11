@@ -1,21 +1,7 @@
 'use strict';
 
-function listFiles(req, callback) {
-  chrome.runtime.sendNativeMessage('github.bvk.past', req, function(resp) {
-    callback(resp);
-  });
-}
-
-function viewFile(req, callback) {
-  chrome.runtime.sendNativeMessage('github.bvk.past', req, function(resp) {
-    callback(resp);
-  });
-}
-
-function addFile(req, callback) {
-  chrome.runtime.sendNativeMessage('github.bvk.past', req, function(resp) {
-    callback(resp);
-  });
+function callBackend(req, callback) {
+  chrome.runtime.sendNativeMessage('github.bvk.past', req, callback);
 }
 
 function setLocalStorage(state, callback) {

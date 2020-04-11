@@ -27,25 +27,13 @@ function onActiveTabReady() {
 function onBackgroundPageReady() {
   // Issue a backend request through background.js so it won't be canceled in
   // the middle when gpg askpass window makes the chrome popup to disappear.
-  let req = { list_files: {} }
-  backgroundPage.listFiles(req, function (resp) {
-    onListFilesResponse(req, resp);
-  });
+  let req = { list_files: {} };
+  callBackend(req, onListFilesResponse);
 }
 
 let passwordFiles;
 
 function onListFilesResponse(req, resp) {
-  if (!resp) {
-    setOperationStatus("Could not query for password file names.");
-    return;
-  }
-
-  if (resp.status != "") {
-    setOperationStatus("Password files query has failed (" + resp.status+").");
-    return;
-  }
-
   passwordFiles = [];
   if (resp.list_files && resp.list_files.files) {
     passwordFiles = resp.list_files.files;
@@ -113,4 +101,18 @@ function showPage(page, id, callback) {
   page.style.display = "";
   document.body.replaceChild(page, document.body.firstElementChild);
   callback(page);
+}
+
+function callBackend(req, callback) {
+  backgroundPage.callBackend(req, function(resp) {
+    if (!resp) {
+      setOperationStatus("Could not perform backend operation.");
+      return;
+    }
+    if (resp.status != "") {
+      setOperationStatus("Backend operation has failed ("+resp.status+").");
+      return;
+    }
+    callback(req, resp);
+  });
 }
