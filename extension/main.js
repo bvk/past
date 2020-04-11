@@ -25,20 +25,6 @@ function onActiveTabReady() {
 }
 
 function onBackgroundPageReady() {
-  // Issue a backend request through background.js so it won't be canceled in
-  // the middle when gpg askpass window makes the chrome popup to disappear.
-  let req = { list_files: {} };
-  callBackend(req, onListFilesResponse);
-}
-
-let passwordFiles;
-
-function onListFilesResponse(req, resp) {
-  passwordFiles = [];
-  if (resp.list_files && resp.list_files.files) {
-    passwordFiles = resp.list_files.files;
-  }
-
   backgroundPage.getLocalStorage(["persistentState"], function(result) {
     onGetPersistentState(result);
   });
@@ -55,10 +41,15 @@ function onGetPersistentState(result) {
     persistentState.fileCountMap = {};
   }
 
+  let searchPage = createSearchPage();
+  showPage(searchPage, "search-page", onSearchPageDisplay);
+}
+
+function updatePersistentState(passFiles) {
   // Add new password files to the fileCountMap.
   let files = {}
-  for (let i = 0; i < passwordFiles.length; i++) {
-    let file = passwordFiles[i];
+  for (let i = 0; i < passFiles.length; i++) {
+    let file = passFiles[i];
     files[file] = true;
     if (!(file in persistentState.fileCountMap)) {
       persistentState.fileCountMap[file] = 0;
@@ -71,11 +62,6 @@ function onGetPersistentState(result) {
       delete persistentState.fileCountMap[key];
     }
   }
-
-  console.log("loaded state", persistentState, passwordFiles);
-
-  let searchPage = createSearchPage();
-  showPage(searchPage, "search-page", onSearchPageDisplay);
 }
 
 //

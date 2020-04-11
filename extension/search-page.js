@@ -1,5 +1,7 @@
 'use strict';
 
+let passwordFiles;
+
 function createSearchPage() {
   let searchPageTemplate = document.getElementById("search-page-template");
   let page = searchPageTemplate.cloneNode(true);
@@ -40,6 +42,16 @@ function createSearchPage() {
 }
 
 function onSearchPageDisplay(page) {
+  let req = { list_files: {} };
+  callBackend(req, function(req, resp) {
+    onSearchPageListFilesResponse(page, req, resp);
+  });
+}
+
+function onSearchPageListFilesResponse(page, req, resp) {
+  passwordFiles = resp.list_files.files;
+  updatePersistentState(resp.list_files.files);
+
   setOperationStatus("Backend is ready.");
   setSearchPageRecentListItems(page, orderSearchPagePasswordFiles(""));
 
