@@ -1,6 +1,6 @@
 // Copyright (c) 2020 BVK Chaitanya
 
-package main
+package store
 
 import (
 	"fmt"
@@ -50,10 +50,10 @@ func Create(store *git.Dir, keyring *gpg.Keyring, fingerprints []string) (_ *Pas
 		return nil, xerrors.Errorf("could not commit gpg keys file: %w", err)
 	}
 
-	return NewPasswordStore(store, keyring)
+	return New(store, keyring)
 }
 
-func NewPasswordStore(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, error) {
+func New(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, error) {
 	if store == nil {
 		return nil, xerrors.Errorf("git repository cannot be nil: %w", os.ErrInvalid)
 	}

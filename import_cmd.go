@@ -10,6 +10,7 @@ import (
 
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
+	"github.com/bvk/past/store"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -61,7 +62,7 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 	if err != nil {
 		return xerrors.Errorf("could not get --ignore-failures value: %w", err)
 	}
-	store, err := git.NewDir(dataDir)
+	repo, err := git.NewDir(dataDir)
 	if err != nil {
 		return xerrors.Errorf("could not create git directory instance: %w", err)
 	}
@@ -69,7 +70,7 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 	if err != nil {
 		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
 	}
-	ps, err := NewPasswordStore(store, keyring)
+	ps, err := store.New(repo, keyring)
 	if err != nil {
 		return xerrors.Errorf("could not create password store instance: %w", err)
 	}

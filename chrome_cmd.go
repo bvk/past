@@ -16,8 +16,9 @@ import (
 
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
-	"github.com/spf13/pflag"
+	"github.com/bvk/past/store"
 
+	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 )
 
@@ -37,13 +38,13 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
 	}
 
-	store, _ := git.NewDir(dataDir)
+	repo, _ := git.NewDir(dataDir)
 	keyring, _ := gpg.NewKeyring("")
-	pstore, _ := NewPasswordStore(store, keyring)
+	pstore, _ := store.New(repo, keyring)
 
 	h := ChromeHandler{
 		dir:     dataDir,
-		store:   store,
+		repo:    repo,
 		keyring: keyring,
 		pstore:  pstore,
 	}
@@ -158,9 +159,9 @@ type DeleteFileResponse struct {
 
 type ChromeHandler struct {
 	dir     string
-	store   *git.Dir
+	repo    *git.Dir
 	keyring *gpg.Keyring
-	pstore  *PasswordStore
+	pstore  *store.PasswordStore
 }
 
 func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) error {
@@ -249,10 +250,10 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 	if c.pstore != nil {
 		resp.PasswordStoreKeys = c.pstore.DefaultKeys()
 	}
-	if c.store != nil {
-		remotes, _ := c.store.Remotes()
+	if c.repo != nil {
+		remotes, _ := c.repo.Remotes()
 		for _, remote := range remotes {
-			addr, err := c.store.RemoteURL(remote)
+			addr, err := c.repo.RemoteURL(remote)
 			if err != nil {
 				resp.GitRemotes = nil
 				break
@@ -285,14 +286,14 @@ func (c *ChromeHandler) doCreateRepo(ctx context.Context, req *CreateRepoRequest
 	if c.pstore != nil {
 		return xerrors.Errorf("git repository already exists: %w", os.ErrInvalid)
 	}
-	if c.store == nil {
+	if c.repo == nil {
 		repo, err := git.Init(c.dir)
 		if err != nil {
 			return err
 		}
-		c.store = repo
+		c.repo = repo
 	}
-	pstore, err := Create(c.store, c.keyring, req.Fingerprints)
+	pstore, err := store.Create(c.repo, c.keyring, req.Fingerprints)
 	if err != nil {
 		return err
 	}
@@ -372,7 +373,7 @@ func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, 
 		return xerrors.Errorf("password store is unavailable to list files (%+v): %w", *c, os.ErrInvalid)
 	}
 
-	files, err := c.store.ListFiles()
+	files, err := c.repo.ListFiles()
 	if err != nil {
 		return xerrors.Errorf("could not list files in the git directory: %w", err)
 	}
@@ -395,7 +396,7 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 	}
 
 	file := filepath.Join("./", req.File+".gpg")
-	encrypted, err := c.store.ReadFile(file)
+	encrypted, err := c.repo.ReadFile(file)
 	if err != nil {
 		return xerrors.Errorf("could not get login entry with name %q: %w", req.File, err)
 	}
@@ -423,7 +424,7 @@ func (c *ChromeHandler) doDeleteFile(ctx context.Context, req *DeleteFileRequest
 	}
 
 	file := filepath.Clean(filepath.Join("./", req.File+".gpg"))
-	if err := c.store.RemoveFile(file); err != nil {
+	if err := c.repo.RemoveFile(file); err != nil {
 		return xerrors.Errorf("could not remove file %q: %w", file, err)
 	}
 	return nil
