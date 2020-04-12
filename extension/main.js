@@ -41,6 +41,32 @@ function onGetPersistentState(result) {
     persistentState.fileCountMap = {};
   }
 
+  // let settingsPage = createSettingsPage();
+  // showPage(settingsPage, "settings-page",  onSettingsPageDisplay);
+
+  let req = {check_status:{}};
+  backgroundPage.callBackend(req, function(resp) {
+    onStatusResponse(req, resp);
+  });
+}
+
+function onStatusResponse(req, resp) {
+  let showSettings = true;
+  if (resp &&
+      resp.status == "" &&
+      resp.check_status.git_path != "" &&
+      resp.check_status.gpg_path != "" &&
+      resp.check_status.gpg_keys && resp.check_status.gpg_keys.length > 0 &&
+      resp.check_status.password_store_keys && resp.check_status.password_store_keys.length > 0) {
+    showSettings = false;
+  }
+
+  if (showSettings) {
+    let settingsPage = createSettingsPage(resp);
+    showPage(settingsPage, "settings-page",  onSettingsPageDisplay);
+    return
+  }
+
   let searchPage = createSearchPage();
   showPage(searchPage, "search-page", onSearchPageDisplay);
 }
@@ -92,10 +118,12 @@ function showPage(page, id, callback) {
 function callBackend(req, callback) {
   backgroundPage.callBackend(req, function(resp) {
     if (!resp) {
+      console.log("request", req, "response", resp);
       setOperationStatus("Could not perform backend operation.");
       return;
     }
     if (resp.status != "") {
+      console.log("request", req, "response", resp);
       setOperationStatus("Backend operation has failed ("+resp.status+").");
       return;
     }

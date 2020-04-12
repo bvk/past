@@ -31,8 +31,39 @@ func NewDir(dir string) (*Dir, error) {
 	return &Dir{dir: targetDir}, nil
 }
 
+func Init(dir string) (*Dir, error) {
+	cmd := exec.Command("git", "init", dir)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, xerrors.Errorf("could not init git repo (stderr: %s): %w", stderr.String(), err)
+	}
+	return &Dir{dir: dir}, nil
+}
+
 func (g *Dir) RootDir() string {
 	return g.dir
+}
+
+func (g *Dir) Remotes() ([]string, error) {
+	cmd := exec.Command("git", "-C", g.dir, "remote")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, xerrors.Errorf("could not list remotes (stderr: %s): %w", stderr.String(), err)
+	}
+	return strings.Fields(stdout.String()), nil
+}
+
+func (g *Dir) RemoteURL(remote string) (string, error) {
+	cmd := exec.Command("git", "-C", g.dir, "remote", "get-url", remote)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		return "", xerrors.Errorf("could not get url for remote %q (stderr: %s): %w", remote, stderr.String(), err)
+	}
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 func (g *Dir) ListFiles() ([]string, error) {

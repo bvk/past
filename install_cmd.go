@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/bvk/past/gpg"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 )
@@ -67,33 +66,10 @@ func cmdInstall(cmd *cobra.Command, args []string) error {
 	flags := cmd.Flags()
 
 	uid := os.Getuid()
-	if uid != 0 {
-		keyring, err := gpg.NewKeyring("")
-		if err != nil {
-			return xerrors.Errorf("could not scan for gpg keyring: %w", err)
-		}
-		pks := keyring.PublicKeys()
-		if len(pks) == 0 {
-			log.Printf("warning: gpg keyring has no keys; browser extension may not be useful")
-		}
-
-		dataDir, err := flags.GetString("data-dir")
-		if err != nil {
-			return xerrors.Errorf("could not get --data-dir value: %w", err)
-		}
-		if _, err := os.Stat(dataDir); err != nil {
-			if !os.IsNotExist(err) {
-				return xerrors.Errorf("could not stat password-store at %q: %w", dataDir, err)
-			}
-			log.Printf("password-store directory %q doesn't exist; browser extension may not be useful")
-		}
-	}
-
 	browser, err := flags.GetString("browser")
 	if err != nil {
 		return xerrors.Errorf("could not get --browser value: %w", err)
 	}
-
 	dev, err := flags.GetBool("dev")
 	if err != nil {
 		return xerrors.Errorf("could not get --dev value: %w", err)

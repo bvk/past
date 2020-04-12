@@ -49,8 +49,12 @@ function onSearchPageDisplay(page) {
 }
 
 function onSearchPageListFilesResponse(page, req, resp) {
-  passwordFiles = resp.list_files.files;
-  updatePersistentState(resp.list_files.files);
+  if (resp && resp.list_files && resp.list_files.files && resp.list_files.files.length > 0) {
+    passwordFiles = resp.list_files.files;
+  } else {
+    passwordFiles = [];
+  }
+  updatePersistentState(passwordFiles);
 
   setOperationStatus("Backend is ready.");
   setSearchPageRecentListItems(page, orderSearchPagePasswordFiles(""));
@@ -91,7 +95,11 @@ function onSearchPageViewButton(page, viewButton) {
 }
 
 function onSearchPageSettingsButton(page, settingsButton) {
-  setOperationStatus("Settings page is not implemented yet.")
+  let settingsPage = createSettingsPage();
+  showPage(settingsPage, "settings-page", function(page) {
+    onSettingsPageDisplay(page);
+    onSettingsPageCheckButton(page);
+  });
 }
 
 function onSearchPageAddButton(page, addButton) {

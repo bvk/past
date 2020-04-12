@@ -8,6 +8,130 @@
 
 		<div id="empty-page">.</div>
 
+		<!-- new key page -->
+
+		<div id="newkey-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons newkey-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Create Keyring</span>
+				<button class="column material-icons newkey-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<div class="row">
+					<span class="column" style="width:6em">User Name</span>
+					<input class="column-elastic newkey-page-username"></input>
+				</div>
+
+				<div class="row">
+					<span class="column" style="width:6em">User Email</span>
+					<input class="column-elastic newkey-page-useremail"></input>
+				</div>
+
+				<div class="row">
+					<span class="column" style="width:6em">Passphrase</span>
+					<input class="column-elastic newkey-page-passphrase" type="password"></input>
+				</div>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons newkey-page-undo-button" disabled>undo</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons newkey-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
+		<!-- new repo page -->
+
+		<div id="newrepo-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons newrepo-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Create Password Store</span>
+				<button class="column material-icons newrepo-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<ul>
+					<li class="newrepo-page-keylist-item">
+						<div class="row">
+							<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
+							<span class="column newrepo-page-key"></span>
+						</div>
+					</li>
+				</ul>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons newrepo-page-undo-button" disabled>undo</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons newrepo-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
+		<!-- settings page -->
+
+		<div id="settings-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons settings-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Settings</span>
+				<button class="column material-icons settings-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content">
+				<ul>
+					<li>
+						<div class="row">
+							<span class="column settings-page-messaging-check material-icons">clear</span>
+							<span class="column-elastic">Chrome Native Messaging</span>
+						</div>
+					</li>
+
+					<li>
+						<div class="row">
+							<span class="column settings-page-tools-check material-icons">remove</span>
+							<span class="column-elastic">Git and GPG Commands</span>
+						</div>
+					</li>
+
+					<li>
+						<div class="row">
+							<span class="column settings-page-keys-check material-icons">remove</span>
+							<span class="column-elastic">GPG Keyring with Secrets</span>
+							<button class="column settings-page-keys-button material-icons" disabled>create_new_folder</button>
+						</div>
+					</li>
+
+					<li>
+						<div class="row">
+							<span class="column settings-page-repo-check material-icons">remove</span>
+							<span class="column-elastic">Password Store Git Repository</span>
+							<button class="column settings-page-repo-button material-icons" disabled>create_new_folder</button>
+						</div>
+					</li>
+
+					<li>
+						<div class="row">
+							<span class="column settings-page-remote-check material-icons">remove</span>
+							<span class="column-elastic">Remote for the Git Repository</span>
+							<button class="column settings-page-remote-button material-icons" disabled>create_new_folder</button>
+						</div>
+					</li>
+				</ul>
+			</div>
+
+			<div class="row footer">
+				<button class="column settings-page-sync-button material-icons" disabled>cloud_upload</button>
+				<div class="column-elastic footer-status">backend is not ready</div>
+				<button class="column settings-page-check-button material-icons">refresh</button>
+			</div>
+		</div>
+
 		<!-- search passwords page -->
 
 		<div id="search-page-template" style="display: none">
@@ -159,7 +283,7 @@
 						<input class="column-elastic password-element edit-page-repeat-password" type="password" placeholder="retype password"></input>
 						<button class="column material-icons edit-page-password-toggle">visibility_off</button>
 						<button class="column material-icons edit-page-password-copy" disabled>content_copy</button>
-						<button class="column material-icons edit-page-password-generate" disabled>cached</button>
+						<button class="column material-icons edit-page-password-generate" disabled>refresh</button>
 					</div>
 
 					<div>Other data</div>
@@ -177,6 +301,9 @@
 		</div>
 
 		<script src="main.js"></script>
+		<script src="newkey-page.js"></script>
+		<script src="newrepo-page.js"></script>
+		<script src="settings-page.js"></script>
 		<script src="search-page.js"></script>
 		<script src="edit-page.js"></script>
 		<script src="view-page.js"></script>

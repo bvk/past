@@ -5,6 +5,7 @@ package gpg
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,7 +28,51 @@ func NewKeyring(path string) (*Keyring, error) {
 	if err := g.Refresh(); err != nil {
 		return nil, xerrors.Errorf("could not list gpg keys: %w", err)
 	}
+	if keys := g.PublicKeys(); len(keys) == 0 {
+		return nil, os.ErrNotExist
+	}
 	return g, nil
+}
+
+func Create(name, email, passphrase string) (*Keyring, error) {
+	// Kill any existing gpg agent to avoid the following error:
+	//
+	// gpg: agent_genkey failed: No such file or directory
+	//
+	exec.Command("gpgconf", "--kill", "gpg-agent").Run()
+
+	file, err := ioutil.TempFile("", "genkeyscript")
+	if err != nil {
+		return nil, xerrors.Errorf("could not create temp file: %w", err)
+	}
+	defer func() {
+		name := file.Name()
+		if err := os.Remove(name); err != nil {
+			log.Printf("error: could not remove temporary file %q: %w", name, err)
+		}
+	}()
+
+	content := `
+Key-Type: default
+Key-Length: 4096
+Subkey-Type: default
+Subkey-Length: 4096
+Name-Real: ` + name + `
+Name-Email: ` + email + `
+Expire-Date: 0
+Passphrase: ` + passphrase + `
+`
+	if _, err := file.Write([]byte(content)); err != nil {
+		return nil, xerrors.Errorf("could not write to temporary file: %w", err)
+	}
+
+	cmd := exec.Command("gpg", "--batch", "--gen-key", file.Name())
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, xerrors.Errorf("could not create initial key (stderr: %s): %w", stderr.String(), err)
+	}
+	return NewKeyring("")
 }
 
 func (g *Keyring) options() []string {
@@ -113,21 +158,21 @@ func (g *Keyring) Encrypt(data []byte, reps []*PublicKey) ([]byte, error) {
 }
 
 type PublicKey struct {
-	KeyID       string
-	Fingerprint string
-	UserHash    string
+	KeyID       string `json:"key_id"`
+	Fingerprint string `json:"fingerprint"`
+	UserHash    string `json:"user_hash"`
 
-	CanEncrypt bool
+	CanEncrypt bool `json:"can_encrypt"`
 
-	Trusted bool
+	Trusted bool `json:"trusted"`
 
-	KeyLength int
+	KeyLength int `json:"key_length"`
 	CreatedAt time.Time
 	ExpiresAt time.Time
 
 	UserDetail string
-	UserName   string
-	UserEmail  string
+	UserName   string `json:"user_name"`
+	UserEmail  string `json:"user_email"`
 }
 
 func (g *Keyring) PublicKeys() []*PublicKey {

@@ -23,7 +23,44 @@ type PasswordStore struct {
 	dirPubKeysMap map[string][]*gpg.PublicKey
 }
 
+func Create(store *git.Dir, keyring *gpg.Keyring, fingerprints []string) (_ *PasswordStore, status error) {
+	if store == nil {
+		return nil, xerrors.Errorf("git repository cannot be nil: %w", os.ErrInvalid)
+	}
+	if keyring == nil {
+		return nil, xerrors.Errorf("keyring cannot be nil: %w", os.ErrInvalid)
+	}
+
+	file := "./.gpg-id"
+	content := strings.Join(fingerprints, "\n")
+	if err := store.AddFile(file, []byte(content), os.FileMode(0644)); err != nil {
+		return nil, xerrors.Errorf("could not add file %q in git repo: %w", file, err)
+	}
+	defer func() {
+		if status != nil {
+			if err := store.Reset("HEAD"); err != nil {
+				log.Panicf("could not undo adding file %q: %v", file, err)
+				return
+			}
+		}
+	}()
+
+	msg := fmt.Sprintf("Initialized password store with keys %q", fingerprints)
+	if err := store.Commit(msg); err != nil {
+		return nil, xerrors.Errorf("could not commit gpg keys file: %w", err)
+	}
+
+	return NewPasswordStore(store, keyring)
+}
+
 func NewPasswordStore(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, error) {
+	if store == nil {
+		return nil, xerrors.Errorf("git repository cannot be nil: %w", os.ErrInvalid)
+	}
+	if keyring == nil {
+		return nil, xerrors.Errorf("keyring cannot be nil: %w", os.ErrInvalid)
+	}
+
 	gitFiles, err := store.ListFiles()
 	if err != nil {
 		return nil, xerrors.Errorf("could not list files in the git directory: %w", err)
@@ -76,6 +113,10 @@ func NewPasswordStore(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, err
 		dirPubKeysMap: dirPubKeysMap,
 	}
 	return ps, nil
+}
+
+func (ps *PasswordStore) DefaultKeys() []*gpg.PublicKey {
+	return ps.dirPubKeysMap["."]
 }
 
 func (ps *PasswordStore) AddPasswordFile(name, password string, rest [][2]string) (status error) {

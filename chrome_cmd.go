@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -35,19 +36,13 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 	if len(dataDir) == 0 {
 		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
 	}
-	store, err := git.NewDir(dataDir)
-	if err != nil {
-		return xerrors.Errorf("could not create git directory instance: %w", err)
-	}
-	keyring, err := gpg.NewKeyring("")
-	if err != nil {
-		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
-	}
-	pstore, err := NewPasswordStore(store, keyring)
-	if err != nil {
-		return xerrors.Errorf("could not create password-store instance: %w", err)
-	}
+
+	store, _ := git.NewDir(dataDir)
+	keyring, _ := gpg.NewKeyring("")
+	pstore, _ := NewPasswordStore(store, keyring)
+
 	h := ChromeHandler{
+		dir:     dataDir,
 		store:   store,
 		keyring: keyring,
 		pstore:  pstore,
@@ -56,6 +51,10 @@ func cmdChrome(flags *pflag.FlagSet, args []string) error {
 }
 
 type ChromeRequest struct {
+	CheckStatus *CheckStatusRequest `json:"check_status"`
+	CreateKey   *CreateKeyRequest   `json:"create_key"`
+	CreateRepo  *CreateRepoRequest  `json:"create_repo"`
+
 	AddFile    *AddFileRequest    `json:"add_file"`
 	EditFile   *EditFileRequest   `json:"edit_file"`
 	ListFiles  *ListFilesRequest  `json:"list_files"`
@@ -68,11 +67,45 @@ type ChromeResponse struct {
 	// on success.
 	Status string `json:"status"`
 
+	CheckStatus *CheckStatusResponse `json:"check_status"`
+	CreateKey   *CreateKeyResponse   `json:"create_key"`
+	CreateRepo  *CreateRepoResponse  `json:"create_repo"`
+
 	AddFile    *AddFileResponse    `json:"add_file"`
 	EditFile   *EditFileResponse   `json:"edit_file"`
 	ListFiles  *ListFilesResponse  `json:"list_files"`
 	ViewFile   *ViewFileResponse   `json:"view_file"`
 	DeleteFile *DeleteFileResponse `json:"delete_file"`
+}
+
+type CheckStatusRequest struct {
+}
+
+type CheckStatusResponse struct {
+	GPGPath string `json:"gpg_path"`
+	GitPath string `json:"git_path"`
+
+	GPGKeys []*gpg.PublicKey `json:"gpg_keys"`
+
+	PasswordStoreKeys []*gpg.PublicKey `json:"password_store_keys"`
+
+	GitRemotes [][2]string `json:"git_remotes"`
+}
+
+type CreateRepoRequest struct {
+	Fingerprints []string `json:"fingerprints"`
+}
+
+type CreateRepoResponse struct {
+}
+
+type CreateKeyRequest struct {
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Passphrase string `json:"passphrase"`
+}
+
+type CreateKeyResponse struct {
 }
 
 type ListFilesRequest struct {
@@ -124,6 +157,7 @@ type DeleteFileResponse struct {
 }
 
 type ChromeHandler struct {
+	dir     string
 	store   *git.Dir
 	keyring *gpg.Keyring
 	pstore  *PasswordStore
@@ -148,6 +182,21 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 
 	var resp ChromeResponse
 	switch {
+	case req.CheckStatus != nil:
+		resp.CheckStatus = new(CheckStatusResponse)
+		if err := c.doCheckStatus(ctx, req.CheckStatus, resp.CheckStatus); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.CreateKey != nil:
+		resp.CreateKey = new(CreateKeyResponse)
+		if err := c.doCreateKey(ctx, req.CreateKey, resp.CreateKey); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.CreateRepo != nil:
+		resp.CreateRepo = new(CreateRepoResponse)
+		if err := c.doCreateRepo(ctx, req.CreateRepo, resp.CreateRepo); err != nil {
+			resp.Status = err.Error()
+		}
 	case req.AddFile != nil:
 		resp.AddFile = new(AddFileResponse)
 		if err := c.doAddFile(ctx, req.AddFile, resp.AddFile); err != nil {
@@ -190,7 +239,72 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	return nil
 }
 
+func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, resp *CheckStatusResponse) error {
+	if p, err := exec.LookPath("git"); err == nil {
+		resp.GitPath = p
+	}
+	if p, err := exec.LookPath("gpg"); err == nil {
+		resp.GPGPath = p
+	}
+	if c.pstore != nil {
+		resp.PasswordStoreKeys = c.pstore.DefaultKeys()
+	}
+	if c.store != nil {
+		remotes, _ := c.store.Remotes()
+		for _, remote := range remotes {
+			addr, err := c.store.RemoteURL(remote)
+			if err != nil {
+				resp.GitRemotes = nil
+				break
+			}
+			resp.GitRemotes = append(resp.GitRemotes, [2]string{remote, addr})
+		}
+	}
+	if c.keyring != nil {
+		resp.GPGKeys = c.keyring.PublicKeys()
+	}
+	return nil
+}
+
+func (c *ChromeHandler) doCreateKey(ctx context.Context, req *CreateKeyRequest, resp *CreateKeyResponse) error {
+	if c.keyring != nil {
+		return xerrors.Errorf("gpg keyring already exists: %w", os.ErrInvalid)
+	}
+	ring, err := gpg.Create(req.Name, req.Email, req.Passphrase)
+	if err != nil {
+		return err
+	}
+	c.keyring = ring
+	return nil
+}
+
+func (c *ChromeHandler) doCreateRepo(ctx context.Context, req *CreateRepoRequest, resp *CreateRepoResponse) error {
+	if c.keyring == nil {
+		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
+	}
+	if c.pstore != nil {
+		return xerrors.Errorf("git repository already exists: %w", os.ErrInvalid)
+	}
+	if c.store == nil {
+		repo, err := git.Init(c.dir)
+		if err != nil {
+			return err
+		}
+		c.store = repo
+	}
+	pstore, err := Create(c.store, c.keyring, req.Fingerprints)
+	if err != nil {
+		return err
+	}
+	c.pstore = pstore
+	return nil
+}
+
 func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp *AddFileResponse) error {
+	if c.pstore == nil {
+		return xerrors.Errorf("password store is unavailable to add file: %w", os.ErrInvalid)
+	}
+
 	var rest = [][2]string{
 		[2]string{"user", strings.TrimSpace(req.Username)},
 		[2]string{"site", strings.TrimSpace(req.Sitename)},
@@ -210,6 +324,10 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 }
 
 func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, resp *EditFileResponse) error {
+	if c.pstore == nil {
+		return xerrors.Errorf("password store is unavailable to edit file: %w", os.ErrInvalid)
+	}
+
 	var rest = [][2]string{
 		[2]string{"user", strings.TrimSpace(req.Username)},
 		[2]string{"site", strings.TrimSpace(req.Sitename)},
@@ -250,6 +368,10 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 }
 
 func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, resp *ListFilesResponse) error {
+	if c.pstore == nil {
+		return xerrors.Errorf("password store is unavailable to list files (%+v): %w", *c, os.ErrInvalid)
+	}
+
 	files, err := c.store.ListFiles()
 	if err != nil {
 		return xerrors.Errorf("could not list files in the git directory: %w", err)
@@ -268,6 +390,10 @@ func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, 
 }
 
 func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, resp *ViewFileResponse) error {
+	if c.pstore == nil {
+		return xerrors.Errorf("password store is unavailable to view file: %w", os.ErrInvalid)
+	}
+
 	file := filepath.Join("./", req.File+".gpg")
 	encrypted, err := c.store.ReadFile(file)
 	if err != nil {
@@ -292,6 +418,10 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 }
 
 func (c *ChromeHandler) doDeleteFile(ctx context.Context, req *DeleteFileRequest, resp *DeleteFileResponse) error {
+	if c.pstore == nil {
+		return xerrors.Errorf("password store is unavailable to delete file: %w", os.ErrInvalid)
+	}
+
 	file := filepath.Clean(filepath.Join("./", req.File+".gpg"))
 	if err := c.store.RemoveFile(file); err != nil {
 		return xerrors.Errorf("could not remove file %q: %w", file, err)
