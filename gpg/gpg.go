@@ -165,14 +165,133 @@ type PublicKey struct {
 	CanEncrypt bool `json:"can_encrypt"`
 
 	Trusted bool `json:"trusted"`
+	Subkey  bool `json:"subkey"`
 
-	KeyLength int `json:"key_length"`
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	KeyLength int       `json:"key_length"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 
-	UserDetail string
+	UserDetail string `json:"user_detail"`
 	UserName   string `json:"user_name"`
 	UserEmail  string `json:"user_email"`
+}
+
+type SecretKey struct {
+	KeyID       string `json:"key_id"`
+	Fingerprint string `json:"fingerprint"`
+	UserHash    string `json:"user_hash"`
+
+	CanEncrypt bool `json:"can_encrypt"`
+
+	Trusted bool `json:"trusted"`
+	Subkey  bool `json:"subkey"`
+
+	KeyLength int       `json:"key_length"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
+
+	UserDetail string `json:"user_detail"`
+	UserName   string `json:"user_name"`
+	UserEmail  string `json:"user_email"`
+}
+
+func (g *Keyring) SecretKeys() []*SecretKey {
+	var groups [][]*internal.Record
+	var recs []*internal.Record
+	for _, rec := range g.skeyRecords {
+		if rec.IsSecretKey() {
+			if len(recs) > 0 {
+				groups = append(groups, recs)
+			}
+			recs = []*internal.Record{rec}
+			continue
+		}
+		if len(recs) > 0 {
+			recs = append(recs, rec)
+		}
+	}
+	if len(recs) > 0 {
+		groups = append(groups, recs)
+	}
+
+	var sks []*SecretKey
+	for _, recs := range groups {
+		skey, sskeys := g.parseSecretKey(recs)
+		if skey != nil {
+			sks = append(sks, skey)
+		}
+		if sskeys != nil {
+			sks = append(sks, sskeys...)
+		}
+	}
+	return sks
+}
+
+func (g *Keyring) parseSecretKey(recs []*internal.Record) (*SecretKey, []*SecretKey) {
+	if !recs[0].IsSecretKey() {
+		return nil, nil
+	}
+	sec := &SecretKey{}
+	ssubs := []*SecretKey{}
+	for ii, rec := range recs {
+		if rec.IsSecretSubkey() {
+			ssubs = g.parseSecretSubkeys(sec, recs[ii:])
+			break
+		} else if rec.IsSecretKey() {
+			sec.KeyID = rec.KeyID()
+			sec.KeyLength = rec.KeyLength()
+			sec.CanEncrypt = rec.CanEncrypt()
+			sec.CreatedAt = rec.CreatedAt()
+			sec.ExpiresAt = rec.ExpiresAt()
+			sec.Trusted = rec.KeyTrusted()
+		} else if rec.IsUserID() {
+			sec.UserDetail = rec.UserDetail()
+			sec.UserEmail = rec.UserEmail()
+			sec.UserHash = rec.UserHash()
+			sec.UserName = rec.UserName()
+		} else if rec.IsFingerprint() {
+			sec.Fingerprint = rec.Fingerprint()
+		}
+	}
+	return sec, ssubs
+}
+
+func (g *Keyring) parseSecretSubkeys(sec *SecretKey, recs []*internal.Record) []*SecretKey {
+	if !recs[0].IsSecretSubkey() {
+		return nil
+	}
+	var sub *SecretKey
+	var subs []*SecretKey
+	for _, rec := range recs {
+		if !rec.IsSecretSubkey() && !rec.IsFingerprint() {
+			break
+		}
+		if rec.IsSecretSubkey() {
+			if sub != nil {
+				subs = append(subs, sub)
+			}
+			sub = &SecretKey{
+				Subkey:     true,
+				UserDetail: sec.UserDetail,
+				UserEmail:  sec.UserEmail,
+				UserHash:   sec.UserHash,
+				UserName:   sec.UserName,
+				KeyID:      rec.KeyID(),
+				KeyLength:  rec.KeyLength(),
+				CanEncrypt: rec.CanEncrypt(),
+				CreatedAt:  rec.CreatedAt(),
+				ExpiresAt:  rec.ExpiresAt(),
+				Trusted:    rec.KeyTrusted(),
+			}
+		}
+		if rec.IsFingerprint() {
+			sub.Fingerprint = rec.Fingerprint()
+		}
+	}
+	if sub != nil {
+		subs = append(subs, sub)
+	}
+	return subs
 }
 
 func (g *Keyring) PublicKeys() []*PublicKey {
@@ -251,6 +370,7 @@ func (g *Keyring) parseSubkeys(pub *PublicKey, recs []*internal.Record) []*Publi
 				subs = append(subs, sub)
 			}
 			sub = &PublicKey{
+				Subkey:     true,
 				UserDetail: pub.UserDetail,
 				UserEmail:  pub.UserEmail,
 				UserHash:   pub.UserHash,

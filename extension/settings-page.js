@@ -67,7 +67,7 @@ function onSettingsPageDisplay(page) {
 
     let keysCheck = page.getElementsByClassName("settings-page-keys-check")[0];
     let keysButton = page.getElementsByClassName("settings-page-keys-button")[0];
-    if (!toolsReady || !params.check_status.gpg_keys || params.check_status.gpg_keys.length == 0) {
+    if (!toolsReady || !params.check_status.local_keys || params.check_status.local_keys.length == 0) {
       keysCheck.textContent = "clear";
       keysButton.disabled = !toolsReady;
     } else {
@@ -160,7 +160,7 @@ function autoSettingsPageBackButton(page, backButton) {
       params.status == "" &&
       params.check_status.git_path != "" &&
       params.check_status.gpg_path != "" &&
-      params.check_status.gpg_keys && params.check_status.gpg_keys.length > 0 &&
+      params.check_status.local_keys && params.check_status.local_keys.length > 0 &&
       params.check_status.password_store_keys && params.check_status.password_store_keys.length > 0) {
     showSettings = false;
   }

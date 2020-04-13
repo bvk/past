@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
@@ -86,7 +87,8 @@ type CheckStatusResponse struct {
 	GPGPath string `json:"gpg_path"`
 	GitPath string `json:"git_path"`
 
-	GPGKeys []*gpg.PublicKey `json:"gpg_keys"`
+	LocalKeys  []*gpg.PublicKey `json:"local_keys"`
+	RemoteKeys []*gpg.PublicKey `json:"remote_keys"`
 
 	PasswordStoreKeys []*gpg.PublicKey `json:"password_store_keys"`
 
@@ -262,7 +264,26 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 		}
 	}
 	if c.keyring != nil {
-		resp.GPGKeys = c.keyring.PublicKeys()
+		now := time.Now()
+		// Identify public keys with the private key and others.
+		skeys := c.keyring.SecretKeys()
+		skeyMap := make(map[string]*gpg.SecretKey)
+		for _, skey := range skeys {
+			skeyMap[skey.Fingerprint] = skey
+		}
+		pkeys := c.keyring.PublicKeys()
+		for _, pkey := range pkeys {
+			if !pkey.ExpiresAt.IsZero() && pkey.ExpiresAt.Before(now) {
+				continue
+			}
+			if pkey.CanEncrypt && pkey.Trusted {
+				if _, ok := skeyMap[pkey.Fingerprint]; ok {
+					resp.LocalKeys = append(resp.LocalKeys, pkey)
+				} else {
+					resp.RemoteKeys = append(resp.RemoteKeys, pkey)
+				}
+			}
+		}
 	}
 	return nil
 }

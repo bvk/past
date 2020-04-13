@@ -56,7 +56,7 @@ function onStatusResponse(req, resp) {
       resp.status == "" &&
       resp.check_status.git_path != "" &&
       resp.check_status.gpg_path != "" &&
-      resp.check_status.gpg_keys && resp.check_status.gpg_keys.length > 0 &&
+      resp.check_status.local_keys && resp.check_status.local_keys.length > 0 &&
       resp.check_status.password_store_keys && resp.check_status.password_store_keys.length > 0) {
     showSettings = false;
   }

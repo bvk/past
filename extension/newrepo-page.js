@@ -29,11 +29,11 @@ function createNewrepoPage(params) {
     onNewrepoPageDoneButton(page, doneButton);
   });
 
-  // Create key list items dynamically.
-  if (params && params.check_status && params.check_status.gpg_keys) {
-    let keyItem = page.getElementsByClassName("newrepo-page-keylist-item")[0];
-    for (let i = 0; i < params.check_status.gpg_keys.length; i++) {
-      let key = params.check_status.gpg_keys[i];
+  // Create local key list items dynamically.
+  if (params && params.check_status && params.check_status.local_keys) {
+    let keyItem = page.getElementsByClassName("newrepo-page-localkey-item")[0];
+    for (let i = 0; i < params.check_status.local_keys.length; i++) {
+      let key = params.check_status.local_keys[i];
 
       let item = keyItem.cloneNode(true);
       item.setAttribute("key-fingerprint", key.fingerprint);
@@ -46,6 +46,26 @@ function createNewrepoPage(params) {
       keyItem.parentNode.insertBefore(item, keyItem.nextSibling);
     }
     keyItem.remove();
+  }
+
+  // Create remote key list if at least one remote key exist. It is hidden by default.
+  if (params && params.check_status && params.check_status.remote_keys) {
+    let keyItem = page.getElementsByClassName("newrepo-page-remotekey-item")[0];
+    for (let i = 0; i < params.check_status.local_keys.length; i++) {
+      let key = params.check_status.local_keys[i];
+
+      let item = keyItem.cloneNode(true);
+      item.setAttribute("key-fingerprint", key.fingerprint);
+      item.setAttribute("key-state", "off");
+      item.getElementsByClassName("newrepo-page-key")[0].textContent = key.user_email;
+      item.addEventListener("click", function() {
+        onNewrepoPageKeyItem(page, item);
+      });
+
+      keyItem.parentNode.insertBefore(item, keyItem.nextSibling);
+    }
+    keyItem.remove();
+    page.getElementsByClassName("newrepo-page-remotekeys-section")[0].style.display = "";
   }
 
   return page;
@@ -83,11 +103,18 @@ function onNewrepoPageKeyItem(page, keyItem) {
 }
 
 function onNewrepoPageUndoButton(page, undoButton) {
-  let items = page.getElementsByClassName("newrepo-page-keylist-item");
-  for (let i = 0; i < items.length; i++) {
-    let checkbox = items[i].getElementsByClassName("newrepo-page-checkbox")[0];
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  for (let i = 0; i < localkeys.length; i++) {
+    let checkbox = localkeys[i].getElementsByClassName("newrepo-page-checkbox")[0];
     checkbox.textContent = "check_box_outline_blank";
-    items[i].setAttribute("key-state", "off");
+    localkeys[i].setAttribute("key-state", "off");
+  }
+
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  for (let i = 0; i < remotekeys.length; i++) {
+    let checkbox = remotekeys[i].getElementsByClassName("newrepo-page-checkbox")[0];
+    checkbox.textContent = "check_box_outline_blank";
+    remotekeys[i].setAttribute("key-state", "off");
   }
 
   if (!undoButton) {
@@ -101,10 +128,18 @@ function onNewrepoPageUndoButton(page, undoButton) {
 
 function onNewrepoPageDoneButton(page, doneButton) {
   let fingerprints = [];
-  let items = page.getElementsByClassName("newrepo-page-keylist-item");
-  for (let i = 0; i < items.length; i++) {
-    let state = items[i].getAttribute("key-state");
-    let fingerprint = items[i].getAttribute("key-fingerprint");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  for (let i = 0; i < localkeys.length; i++) {
+    let state = localkeys[i].getAttribute("key-state");
+    let fingerprint = localkeys[i].getAttribute("key-fingerprint");
+    if (state == "on") {
+      fingerprints.push(fingerprint);
+    }
+  }
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  for (let i = 0; i < remotekeys.length; i++) {
+    let state = remotekeys[i].getAttribute("key-state");
+    let fingerprint = remotekeys[i].getAttribute("key-fingerprint");
     if (state == "on") {
       fingerprints.push(fingerprint);
     }
@@ -125,9 +160,17 @@ function onNewrepoPageCreateRepoResponse(page, req, resp) {
 
 function autoNewrepoPageUndoButton(page, undoButton) {
   let disable = true;
-  let items = page.getElementsByClassName("newrepo-page-keylist-item");
-  for (let i = 0; i < items.length; i++) {
-    let state = items[i].getAttribute("key-state");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  for (let i = 0; i < localkeys.length; i++) {
+    let state = localkeys[i].getAttribute("key-state");
+    if (state == "on") {
+      disable = false;
+      break;
+    }
+  }
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  for (let i = 0; disable && i < remotekeys.length; i++) {
+    let state = remotekeys[i].getAttribute("key-state");
     if (state == "on") {
       disable = false;
       break;
@@ -141,9 +184,9 @@ function autoNewrepoPageUndoButton(page, undoButton) {
 
 function autoNewrepoPageDoneButton(page, doneButton) {
   let disable = true;
-  let items = page.getElementsByClassName("newrepo-page-keylist-item");
-  for (let i = 0; i < items.length; i++) {
-    let state = items[i].getAttribute("key-state");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  for (let i = 0; i < localkeys.length; i++) {
+    let state = localkeys[i].getAttribute("key-state");
     if (state == "on") {
       disable = false;
       break;

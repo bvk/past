@@ -22,6 +22,14 @@ func (r *Record) IsPublicKey() bool {
 	return len(r.fields) > 0 && r.fields[0] == "pub"
 }
 
+func (r *Record) IsSecretKey() bool {
+	return len(r.fields) > 0 && r.fields[0] == "sec"
+}
+
+func (r *Record) IsSecretSubkey() bool {
+	return len(r.fields) > 0 && r.fields[0] == "ssb"
+}
+
 func (r *Record) IsUserID() bool {
 	return len(r.fields) > 0 && r.fields[0] == "uid"
 }
@@ -35,7 +43,7 @@ func (r *Record) IsSubkey() bool {
 }
 
 func (r *Record) KeyLength() int {
-	if r.IsPublicKey() || r.IsSubkey() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		if len(r.fields) >= 3 {
 			size, err := strconv.Atoi(r.fields[2])
 			if err != nil {
@@ -48,7 +56,7 @@ func (r *Record) KeyLength() int {
 }
 
 func (r *Record) KeyID() string {
-	if r.IsPublicKey() || r.IsSubkey() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		if len(r.fields) >= 5 {
 			return r.fields[4]
 		}
@@ -57,7 +65,7 @@ func (r *Record) KeyID() string {
 }
 
 func (r *Record) KeyTrusted() bool {
-	if r.IsPublicKey() || r.IsSubkey() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		if len(r.fields) >= 2 {
 			return strings.Contains(r.fields[1], "u")
 		}
@@ -73,21 +81,21 @@ func (r *Record) Fingerprint() string {
 }
 
 func (r *Record) CanEncrypt() bool {
-	if r.IsPublicKey() || r.IsSubkey() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		return len(r.fields) >= 12 && strings.ContainsAny(r.fields[11], "e")
 	}
 	return false
 }
 
 func (r *Record) IsExpired() bool {
-	if r.IsPublicKey() || r.IsSubkey() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		return len(r.fields) >= 2 && strings.ContainsAny(r.fields[1], "e")
 	}
 	return false
 }
 
 func (r *Record) CreatedAt() time.Time {
-	if r.IsPublicKey() || r.IsSubkey() || r.IsUserID() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsUserID() || r.IsSecretKey() || r.IsSecretSubkey() {
 		if l := len(r.fields); l >= 6 && len(r.fields[5]) > 0 {
 			field := r.fields[5]
 			var secs, nsecs int64
@@ -115,7 +123,7 @@ func (r *Record) CreatedAt() time.Time {
 }
 
 func (r *Record) ExpiresAt() time.Time {
-	if r.IsPublicKey() || r.IsSubkey() || r.IsUserID() {
+	if r.IsPublicKey() || r.IsSubkey() || r.IsUserID() || r.IsSecretKey() || r.IsSecretSubkey() {
 		if l := len(r.fields); l >= 7 && len(r.fields[6]) > 0 {
 			secs, err := strconv.ParseInt(r.fields[6], 10, 64)
 			if err != nil {
