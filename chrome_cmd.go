@@ -326,20 +326,19 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 	if c.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to add file: %w", os.ErrInvalid)
 	}
-
-	var rest = [][2]string{
-		[2]string{"user", strings.TrimSpace(req.Username)},
-		[2]string{"site", strings.TrimSpace(req.Sitename)},
-	}
-	for _, other := range req.Rest {
-		rest = append(rest, other)
-	}
-
 	if strings.Contains(req.File, "/") {
 		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
 	}
 
-	if err := c.pstore.AddPasswordFile(strings.TrimSpace(req.File), req.Password, rest); err != nil {
+	vs := store.NewValues(nil)
+	for _, other := range req.Rest {
+		vs.Set(other[0], other[1])
+	}
+	vs.Set("username", req.Username)
+	vs.Set("sitename", req.Sitename)
+
+	data := store.Format(req.Password, vs.Bytes())
+	if err := c.pstore.CreateFile(req.File, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not add new file: %w", err)
 	}
 	return nil
@@ -349,40 +348,21 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 	if c.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to edit file: %w", os.ErrInvalid)
 	}
-
-	var rest = [][2]string{
-		[2]string{"user", strings.TrimSpace(req.Username)},
-		[2]string{"site", strings.TrimSpace(req.Sitename)},
-	}
-	lines := strings.Split(req.Data, "\n")
-	for _, line := range lines {
-		line := strings.TrimSpace(line)
-		if len(line) == 0 {
-			continue
-		}
-		if i := strings.IndexRune(line, ':'); i != -1 {
-			key := strings.TrimSpace(line[:i])
-			value := strings.TrimSpace(line[i+1:])
-			if len(key) > 0 && len(value) > 0 {
-				rest = append(rest, [2]string{key, value})
-			}
-			continue
-		}
-		rest = append(rest, [2]string{strings.TrimSpace(line), ""})
-	}
-
 	if strings.Contains(req.File, "/") {
 		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
 	}
 
-	file := strings.TrimSpace(req.File)
+	vs := store.NewValues([]byte(req.Data))
+	vs.Set("username", req.Username)
+	vs.Set("sitename", req.Sitename)
+
+	data := store.Format(req.Password, vs.Bytes())
 	if len(req.OrigFile) > 0 && req.OrigFile != req.File {
-		origFile := strings.TrimSpace(req.OrigFile)
-		if err := c.pstore.ReplacePasswordFile(origFile, file, req.Password, rest); err != nil {
-			return xerrors.Errorf("could not replace file %q: %w", origFile, err)
+		if err := c.pstore.ReplaceFile(req.OrigFile, req.File, data); err != nil {
+			return xerrors.Errorf("could not replace file %q: %w", req.OrigFile, err)
 		}
 	} else {
-		if err := c.pstore.UpdatePasswordFile(file, req.Password, rest); err != nil {
+		if err := c.pstore.UpdateFile(req.File, data); err != nil {
 			return xerrors.Errorf("could not update file %q: %w", req.File, err)
 		}
 	}

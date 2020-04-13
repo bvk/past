@@ -8,8 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bvk/past/git"
-	"github.com/bvk/past/gpg"
 	"github.com/bvk/past/store"
 
 	"github.com/spf13/cobra"
@@ -50,9 +48,9 @@ func cmdImport(cmd *cobra.Command, args []string) error {
 }
 
 func importChromePasswords(flags *pflag.FlagSet, file string) error {
-	dataDir, err := flags.GetString("data-dir")
+	ps, err := newPasswordStore(flags)
 	if err != nil {
-		return xerrors.Errorf("could not get --data-dir value: %w", err)
+		return xerrors.Errorf("could not create password store instance: %w", err)
 	}
 	overwrite, err := flags.GetBool("overwrite")
 	if err != nil {
@@ -61,18 +59,6 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 	ignoreFailures, err := flags.GetBool("ignore-failures")
 	if err != nil {
 		return xerrors.Errorf("could not get --ignore-failures value: %w", err)
-	}
-	repo, err := git.NewDir(dataDir)
-	if err != nil {
-		return xerrors.Errorf("could not create git directory instance: %w", err)
-	}
-	keyring, err := gpg.NewKeyring("")
-	if err != nil {
-		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
-	}
-	ps, err := store.New(repo, keyring)
-	if err != nil {
-		return xerrors.Errorf("could not create password store instance: %w", err)
 	}
 
 	f, err := os.Open(file)
@@ -114,16 +100,19 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 			log.Printf("line %d has not enough columns (ignored)", i)
 			continue
 		}
-		var rest [][2]string
+
+		vs := store.NewValues(nil)
 		name, password := fields[nameOffset], fields[passwordOffset]
 		for i, header := range headers {
 			if i != nameOffset && i != passwordOffset {
-				rest = append(rest, [2]string{header, fields[i]})
+				vs.Set(header, fields[i])
 			}
 		}
-		if err := ps.AddPasswordFile(name, password, rest); err != nil {
+
+		data := store.Format(password, vs.Bytes())
+		if err := ps.CreateFile(name, data, os.FileMode(0644)); err != nil {
 			if overwrite && xerrors.Is(err, os.ErrExist) {
-				err = ps.UpdatePasswordFile(name, password, rest)
+				err = ps.UpdateFile(name, data)
 			}
 			if err != nil && !ignoreFailures {
 				return xerrors.Errorf("could not add entry %s: %w", name, err)

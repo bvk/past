@@ -6,10 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"github.com/bvk/past/git"
-	"github.com/bvk/past/gpg"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -28,39 +24,27 @@ func init() {
 
 func cmdShow(cmd *cobra.Command, args []string) error {
 	flags := cmd.Flags()
+	ps, err := newPasswordStore(flags)
+	if err != nil {
+		return xerrors.Errorf("could not create password store instance: %w", err)
+	}
+
 	if len(args) == 0 {
 		return xerrors.Errorf("password file argument is required: %w", os.ErrInvalid)
 	}
 	if len(args) > 1 {
 		return xerrors.Errorf("too many arguments: %w", os.ErrInvalid)
 	}
-	file := filepath.Join("./", args[0]+".gpg")
-	dataDir, err := flags.GetString("data-dir")
-	if err != nil {
-		return xerrors.Errorf("could not get --data-dir value: %w", err)
-	}
-	if len(dataDir) == 0 {
-		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
-	}
+	file := args[0]
+
 	line, err := flags.GetUint32("line")
 	if err != nil {
 		return xerrors.Errorf("could not get --line value: %w", err)
 	}
-	store, err := git.NewDir(dataDir)
-	if err != nil {
-		return xerrors.Errorf("could not create git directory instance: %w", err)
-	}
-	keyring, err := gpg.NewKeyring("")
-	if err != nil {
-		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
-	}
-	data, err := store.ReadFile(file)
+
+	decrypted, err := ps.ReadFile(file)
 	if err != nil {
 		return xerrors.Errorf("could not read file %q: %w", file, err)
-	}
-	decrypted, err := keyring.Decrypt(data)
-	if err != nil {
-		return xerrors.Errorf("could not decrypt file %q: %w", file, err)
 	}
 	if line == 0 {
 		fmt.Printf("%s", decrypted)
@@ -68,9 +52,9 @@ func cmdShow(cmd *cobra.Command, args []string) error {
 	}
 
 	lines := bytes.Split(decrypted, []byte("\n"))
-	if l := len(lines); line > uint32(l) {
+	if l := len(lines); line >= uint32(l) {
 		return xerrors.Errorf("file %q doesn't have line %d: %w", line, os.ErrInvalid)
 	}
-	fmt.Printf("%s\n", lines[int(line)-1])
+	fmt.Printf("%s\n", lines[int(line)])
 	return nil
 }

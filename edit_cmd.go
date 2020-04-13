@@ -4,15 +4,11 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/bvk/past/git"
-	"github.com/bvk/past/gpg"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -31,6 +27,10 @@ func init() {
 
 func cmdEdit(cmd *cobra.Command, args []string) (status error) {
 	flags := cmd.Flags()
+	ps, err := newPasswordStore(flags)
+	if err != nil {
+		return xerrors.Errorf("could not create password store instance: %w", err)
+	}
 
 	if len(args) == 0 {
 		return xerrors.Errorf("password file argument is required: %w", os.ErrInvalid)
@@ -38,14 +38,8 @@ func cmdEdit(cmd *cobra.Command, args []string) (status error) {
 	if len(args) > 1 {
 		return xerrors.Errorf("too many arguments: %w", os.ErrInvalid)
 	}
-	file := filepath.Join("./", args[0]+".gpg")
-	dataDir, err := flags.GetString("data-dir")
-	if err != nil {
-		return xerrors.Errorf("could not get --data-dir value: %w", err)
-	}
-	if len(dataDir) == 0 {
-		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
-	}
+	file := filepath.Join("./", args[0])
+
 	editor, err := flags.GetString("editor")
 	if err != nil {
 		return xerrors.Errorf("could not get --editor value: %w", err)
@@ -54,28 +48,11 @@ func cmdEdit(cmd *cobra.Command, args []string) (status error) {
 		return xerrors.Errorf("editor name cannot be empty: %w", os.ErrInvalid)
 	}
 
-	store, err := git.NewDir(dataDir)
+	oldDecrypted, err := ps.ReadFile(file)
 	if err != nil {
-		return xerrors.Errorf("could not create git directory instance: %w", err)
-	}
-	keyring, err := gpg.NewKeyring("")
-	if err != nil {
-		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
+		return xerrors.Errorf("could not read password file %q: %w", file, err)
 	}
 
-	keys, err := getFileKeys(store, keyring, file)
-	if err != nil {
-		return xerrors.Errorf("could not get keys for file %q: %w", file, err)
-	}
-
-	oldEncrypted, err := store.ReadFile(file)
-	if err != nil {
-		return xerrors.Errorf("could not read file %q: %w", file, err)
-	}
-	oldDecrypted, err := keyring.Decrypt(oldEncrypted)
-	if err != nil {
-		return xerrors.Errorf("could not decrypt file %q: %w", file, err)
-	}
 	temp, err := ioutil.TempFile("", "file")
 	if err != nil {
 		return xerrors.Errorf("could not create temporary file: %w", err)
@@ -86,6 +63,7 @@ func cmdEdit(cmd *cobra.Command, args []string) (status error) {
 			log.Panicf("could not remove temporary file %q with potentially decrypted data: %v", temp.Name(), err)
 		}
 	}()
+
 	if _, err := temp.Write(oldDecrypted); err != nil {
 		return xerrors.Errorf("could not write to temporary file: %w", err)
 	}
@@ -103,29 +81,12 @@ func cmdEdit(cmd *cobra.Command, args []string) (status error) {
 		return xerrors.Errorf("could not read temporary file: %w", err)
 	}
 	if v := bytes.Compare(oldDecrypted, newDecrypted); v == 0 {
+		log.Printf("no changes detected, so file is not updated")
 		return nil
 	}
 
-	newEncrypted, err := keyring.Encrypt(newDecrypted, keys)
-	if err != nil {
-		return xerrors.Errorf("could not encrypt new password: %w", err)
-	}
-
-	if err := store.UpdateFile(file, newEncrypted); err != nil {
-		return xerrors.Errorf("could not update file %q in git repo: %w", file, err)
-	}
-	defer func() {
-		if status != nil {
-			if err := store.Reset("HEAD"); err != nil {
-				log.Panicf("could not undo adding file %q: %v", file, err)
-				return
-			}
-		}
-	}()
-
-	msg := fmt.Sprintf("Edited password file %q with %q", file, editor)
-	if err := store.Commit(msg); err != nil {
-		return xerrors.Errorf("could not commit reinitialize change: %w", err)
+	if err := ps.UpdateFile(file, newDecrypted); err != nil {
+		return xerrors.Errorf("could not update file %q: %w", file, err)
 	}
 	return nil
 }

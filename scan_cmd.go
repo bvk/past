@@ -8,10 +8,6 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
-
-	"github.com/bvk/past/git"
-	"github.com/bvk/past/gpg"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -31,18 +27,16 @@ func init() {
 
 func cmdScan(cmd *cobra.Command, args []string) error {
 	flags := cmd.Flags()
+	ps, err := newPasswordStore(flags)
+	if err != nil {
+		return xerrors.Errorf("could not create password store instance: %w", err)
+	}
+
 	if len(args) == 0 {
 		return xerrors.Errorf("search string argument is required: %w", os.ErrInvalid)
 	}
 	if len(args) > 1 {
 		return xerrors.Errorf("too many search string arguments: %w", os.ErrInvalid)
-	}
-	dataDir, err := flags.GetString("data-dir")
-	if err != nil {
-		return xerrors.Errorf("could not get --data-dir value: %w", err)
-	}
-	if len(dataDir) == 0 {
-		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
 	}
 	isRegexp, err := flags.GetBool("regexp")
 	if err != nil {
@@ -61,46 +55,29 @@ func cmdScan(cmd *cobra.Command, args []string) error {
 		return xerrors.Errorf("could not get --skip-decrypt-failures value: %w", err)
 	}
 
-	store, err := git.NewDir(dataDir)
+	files, err := ps.ListFiles()
 	if err != nil {
-		return xerrors.Errorf("could not create git directory instance: %w", err)
-	}
-	files, err := store.ListFiles()
-	if err != nil {
-		return xerrors.Errorf("could not list files in the git directory: %w", err)
-	}
-
-	keyring, err := gpg.NewKeyring("")
-	if err != nil {
-		return xerrors.Errorf("could not create gpg key ring instance: %w", err)
+		return xerrors.Errorf("could not list files in the password store: %w", err)
 	}
 
 	skipped := []string{}
 	for _, file := range files {
-		if !strings.HasSuffix(file, ".gpg") {
-			continue
-		}
-		data, err := store.ReadFile(file)
-		if err != nil {
-			return xerrors.Errorf("could not read file %q: %w", file, err)
-		}
-		decrypted, err := keyring.Decrypt(data)
+		decrypted, err := ps.ReadFile(file)
 		if err != nil {
 			if !skipDecryptFailures {
-				return xerrors.Errorf("could not decrypt file %q: %w", file, err)
+				return xerrors.Errorf("could not read file %q: %w", file, err)
 			}
 			skipped = append(skipped, file)
 		}
-		name := strings.TrimSuffix(file, ".gpg")
 		for ii, line := range bytes.Split(decrypted, []byte("\n")) {
 			if re != nil {
 				if v := re.Find(line); v != nil {
-					fmt.Printf("%s:%d: %s\n", name, ii, line)
+					fmt.Printf("%s:%d: %s\n", file, ii, line)
 				}
 				continue
 			}
 			if bytes.Contains(line, []byte(args[0])) {
-				fmt.Printf("%s:%d: %s\n", name, ii, line)
+				fmt.Printf("%s:%d: %s\n", file, ii, line)
 			}
 		}
 	}

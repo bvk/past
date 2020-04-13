@@ -76,7 +76,20 @@ func (g *Dir) ListFiles() ([]string, error) {
 	return strings.Fields(string(stdout.Bytes())), nil
 }
 
-func (g *Dir) AddFile(path string, data []byte, mode os.FileMode) (status error) {
+func (g *Dir) Stat(path string) (os.FileInfo, error) {
+	file := filepath.Join(g.dir, path)
+	return os.Stat(file)
+}
+
+func (g *Dir) Rename(oldpath, newpath string) error {
+	cmd := exec.Command("git", "-C", g.dir, "mv", oldpath, newpath)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not rename file %q to %q: %w", oldpath, newpath, err)
+	}
+	return nil
+}
+
+func (g *Dir) CreateFile(path string, data []byte, mode os.FileMode) (status error) {
 	file := filepath.Join(g.dir, path)
 	if _, err := os.Stat(file); err == nil {
 		return xerrors.Errorf("target path %q already exists: %w", path, os.ErrExist)
@@ -108,6 +121,18 @@ func (g *Dir) RemoveFile(path string) error {
 	removeCmd := exec.Command("git", "-C", g.dir, "rm", path)
 	if err := removeCmd.Run(); err != nil {
 		return xerrors.Errorf("could not remove file %q: %w", path, err)
+	}
+	return nil
+}
+
+func (g *Dir) WriteFile(path string, data []byte, mode os.FileMode) (status error) {
+	file := filepath.Join(g.dir, path)
+	if err := ioutil.WriteFile(file, data, mode); err != nil {
+		return xerrors.Errorf("could not write to file %q: %w", path, err)
+	}
+	addCmd := exec.Command("git", "-C", g.dir, "add", file)
+	if err := addCmd.Run(); err != nil {
+		return xerrors.Errorf("could not add changes to file %q: %w", path, err)
 	}
 	return nil
 }
@@ -148,6 +173,26 @@ func (g *Dir) Reset(target string) error {
 	resetCmd := exec.Command("git", "-C", g.dir, "reset", "--hard", target)
 	if err := resetCmd.Run(); err != nil {
 		return xerrors.Errorf("could not reset changes to the git repository: %w", err)
+	}
+	return nil
+}
+
+func (g *Dir) Apply(msg string, cb func() error) (status error) {
+	defer func() {
+		if status != nil {
+			if err := g.Reset("HEAD"); err != nil {
+				log.Panicf("could not revert changes to the git repo: %v", err)
+				return
+			}
+		}
+	}()
+
+	if err := cb(); err != nil {
+		return err
+	}
+
+	if err := g.Commit(msg); err != nil {
+		return xerrors.Errorf("could not commit changes to the git repo: %w", err)
 	}
 	return nil
 }

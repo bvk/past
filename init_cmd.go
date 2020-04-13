@@ -102,7 +102,7 @@ func doCreate(cmd *cobra.Command, args []string) (status error) {
 		}
 	}()
 
-	store, err := git.NewDir(dataDir)
+	repo, err := git.NewDir(dataDir)
 	if err != nil {
 		return xerrors.Errorf("could not create git directory instance: %w", err)
 	}
@@ -112,11 +112,11 @@ func doCreate(cmd *cobra.Command, args []string) (status error) {
 		fps = append(fps, key.Fingerprint)
 	}
 	data := []byte(strings.Join(fps, "\n") + "\n")
-	if err := store.AddFile(".gpg-id", data, os.FileMode(0644)); err != nil {
+	if err := repo.CreateFile(".gpg-id", data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not create .gpg-id file with the key ids: %w", err)
 	}
 	msg := fmt.Sprintf("Created password store with keys %q", fps)
-	if err := store.Commit(msg); err != nil {
+	if err := repo.Commit(msg); err != nil {
 		return xerrors.Errorf("could not perform initial commit: %w", err)
 	}
 	return nil
@@ -133,7 +133,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 		return xerrors.Errorf("could not get --skip-decrypt-failures value: %w", err)
 	}
 
-	store, err := git.NewDir(dataDir)
+	repo, err := git.NewDir(dataDir)
 	if err != nil {
 		return xerrors.Errorf("could not create git directory instance: %w", err)
 	}
@@ -163,7 +163,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 		keys = append(keys, key)
 	}
 
-	gitFiles, err := store.ListFiles()
+	gitFiles, err := repo.ListFiles()
 	if err != nil {
 		return xerrors.Errorf("could not list files in the git directory: %w", err)
 	}
@@ -173,7 +173,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 	for _, path := range gitFiles {
 		base := filepath.Base(path)
 		if base == ".gpg-id" {
-			data, err := store.ReadFile(path)
+			data, err := repo.ReadFile(path)
 			if err != nil {
 				return xerrors.Errorf("could not read file %q: %w", path, err)
 			}
@@ -203,7 +203,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 	nupdated := 0
 	defer func() {
 		if nupdated > 0 && status != nil {
-			if err := store.Reset("HEAD"); err != nil {
+			if err := repo.Reset("HEAD"); err != nil {
 				log.Printf("could not reset repo changes on a failure (needs manual cleanup): %v", err)
 			}
 		}
@@ -214,7 +214,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 		if dir != "." {
 			continue
 		}
-		data, err := store.ReadFile(path)
+		data, err := repo.ReadFile(path)
 		if err != nil {
 			return xerrors.Errorf("could not read file %q: %w", path, err)
 		}
@@ -229,7 +229,7 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 		if err != nil {
 			return xerrors.Errorf("could not rencrypt %q with new keys: %w", path, err)
 		}
-		if err := store.UpdateFile(path, encrypted); err != nil {
+		if err := repo.UpdateFile(path, encrypted); err != nil {
 			return xerrors.Errorf("could not update file %q in git repo: %w", path, err)
 		}
 		log.Printf("re-encrypted %q with new keys", path)
@@ -245,12 +245,12 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 	for _, key := range keys {
 		fps = append(fps, key.Fingerprint)
 	}
-	if err := store.UpdateFile(".gpg-id", []byte(strings.Join(fps, "\n")+"\n")); err != nil {
+	if err := repo.UpdateFile(".gpg-id", []byte(strings.Join(fps, "\n")+"\n")); err != nil {
 		return xerrors.Errorf("could not update .gpg-id file with new keys: %w", err)
 	}
 
 	msg := fmt.Sprintf("Reinitialized the repo with new keys %q", args)
-	if err := store.Commit(msg); err != nil {
+	if err := repo.Commit(msg); err != nil {
 		return xerrors.Errorf("could not commit reinitialize change: %w", err)
 	}
 

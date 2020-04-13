@@ -3,6 +3,7 @@
 package store
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -33,7 +34,7 @@ func Create(store *git.Dir, keyring *gpg.Keyring, fingerprints []string) (_ *Pas
 
 	file := "./.gpg-id"
 	content := strings.Join(fingerprints, "\n")
-	if err := store.AddFile(file, []byte(content), os.FileMode(0644)); err != nil {
+	if err := store.CreateFile(file, []byte(content), os.FileMode(0644)); err != nil {
 		return nil, xerrors.Errorf("could not add file %q in git repo: %w", file, err)
 	}
 	defer func() {
@@ -119,136 +120,150 @@ func (ps *PasswordStore) DefaultKeys() []*gpg.PublicKey {
 	return ps.dirPubKeysMap["."]
 }
 
-func (ps *PasswordStore) AddPasswordFile(name, password string, rest [][2]string) (status error) {
-	file := filepath.Clean(filepath.Join("./", name+".gpg"))
-	pkeys, err := ps.FileKeys(file)
-	if err != nil {
-		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
-	}
-
-	lines := []string{password}
-	for _, kv := range rest {
-		lines = append(lines, fmt.Sprintf("%s: %s", kv[0], kv[1]))
-	}
-	decrypted := []byte(strings.Join(lines, "\n") + "\n")
-
-	encrypted, err := ps.keyring.Encrypt(decrypted, pkeys)
-	if err != nil {
-		return xerrors.Errorf("could not encrypt new password: %w", err)
-	}
-
-	if err := ps.store.AddFile(file, encrypted, os.FileMode(0644)); err != nil {
-		return xerrors.Errorf("could not add file %q in git repo: %w", file, err)
-	}
-	defer func() {
-		if status != nil {
-			if err := ps.store.Reset("HEAD"); err != nil {
-				log.Panicf("could not undo adding file %q: %v", file, err)
-				return
-			}
-		}
-	}()
-
-	msg := fmt.Sprintf("Added new password file %q", file)
-	if err := ps.store.Commit(msg); err != nil {
-		return xerrors.Errorf("could not commit add file change: %w", err)
-	}
-	ps.gitFiles = append(ps.gitFiles, file)
-	return nil
-}
-
-func (ps *PasswordStore) UpdatePasswordFile(name, password string, rest [][2]string) (status error) {
-	file := filepath.Clean(filepath.Join("./", name+".gpg"))
-	pkeys, err := ps.FileKeys(file)
-	if err != nil {
-		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
-	}
-
-	lines := []string{password}
-	for _, kv := range rest {
-		lines = append(lines, fmt.Sprintf("%s: %s", kv[0], kv[1]))
-	}
-	decrypted := []byte(strings.Join(lines, "\n") + "\n")
-
-	encrypted, err := ps.keyring.Encrypt(decrypted, pkeys)
-	if err != nil {
-		return xerrors.Errorf("could not encrypt new password: %w", err)
-	}
-
-	if err := ps.store.UpdateFile(file, encrypted); err != nil {
-		return xerrors.Errorf("could not update file %q in git repo: %w", file, err)
-	}
-	defer func() {
-		if status != nil {
-			if err := ps.store.Reset("HEAD"); err != nil {
-				log.Panicf("could not undo updating file %q: %v", file, err)
-				return
-			}
-		}
-	}()
-
-	msg := fmt.Sprintf("Updated password file %q", file)
-	if err := ps.store.Commit(msg); err != nil {
-		return xerrors.Errorf("could not commit update file change: %w", err)
-	}
-	return nil
-}
-
-func (ps *PasswordStore) ReplacePasswordFile(oldName, newName, password string, rest [][2]string) (status error) {
-	oldFile := filepath.Clean(filepath.Join("./", oldName+".gpg"))
-	if exists, err := ps.FileExists(oldFile); err != nil {
-		return xerrors.Errorf("could not determine if old file %q exists: %w", oldName, err)
-	} else if !exists {
-		return xerrors.Errorf("old file %q doesn't exist: %w", oldName, os.ErrNotExist)
-	}
-
-	newFile := filepath.Clean(filepath.Join("./", newName+".gpg"))
-	pkeys, err := ps.FileKeys(newFile)
-	if err != nil {
-		return xerrors.Errorf("could not find appropriate keys for file %q: %w", newName, err)
-	}
-
-	lines := []string{password}
-	for _, kv := range rest {
-		lines = append(lines, fmt.Sprintf("%s: %s", kv[0], kv[1]))
-	}
-	decrypted := []byte(strings.Join(lines, "\n") + "\n")
-
-	encrypted, err := ps.keyring.Encrypt(decrypted, pkeys)
-	if err != nil {
-		return xerrors.Errorf("could not encrypt new password: %w", err)
-	}
-
-	if err := ps.store.AddFile(newFile, encrypted, os.FileMode(0644)); err != nil {
-		return xerrors.Errorf("could not add file %q in git repo: %w", newFile, err)
-	}
-	defer func() {
-		if status != nil {
-			if err := ps.store.Reset("HEAD"); err != nil {
-				log.Panicf("could not undo adding file %q: %v", newFile, err)
-				return
-			}
-		}
-	}()
-
-	if err := ps.store.RemoveFile(oldFile); err != nil {
-		return xerrors.Errorf("could not remove file %q: %w", oldFile, err)
-	}
-
-	msg := fmt.Sprintf("Replaced %q with %q.", oldFile, newFile)
-	if err := ps.store.Commit(msg); err != nil {
-		return xerrors.Errorf("could not commit add file change: %w", err)
-	}
-
-	var gitFiles []string
+func (ps *PasswordStore) ListFiles() ([]string, error) {
+	var files []string
 	for _, file := range ps.gitFiles {
-		if file == oldFile {
-			gitFiles = append(gitFiles, newFile)
-		} else {
-			gitFiles = append(gitFiles, file)
+		if strings.HasSuffix(file, ".gpg") {
+			files = append(files, strings.TrimSuffix(file, ".gpg"))
 		}
 	}
-	ps.gitFiles = gitFiles
+	return files, nil
+}
+
+// ReadFile returns a password file's content in unencrypted form.
+func (ps *PasswordStore) ReadFile(path string) ([]byte, error) {
+	file := filepath.Clean(filepath.Join("./", path+".gpg"))
+	encrypted, err := ps.store.ReadFile(file)
+	if err != nil {
+		return nil, xerrors.Errorf("could not read file %q: %w", file, err)
+	}
+	decrypted, err := ps.keyring.Decrypt(encrypted)
+	if err != nil {
+		return nil, xerrors.Errorf("could not decrypt file %q: %w", file, err)
+	}
+	return decrypted, nil
+}
+
+// WriteFile creates or overwrites a password file with the input data. Input
+// data is assumed to be in unencrypted form with a password and any optional
+// user data prepared using the Format function. New password file will be
+// created with the input mode if target file doesn't exist.
+func (ps *PasswordStore) WriteFile(path string, data []byte, mode os.FileMode) error {
+	file := filepath.Clean(filepath.Join("./", path+".gpg"))
+	pkeys, err := ps.FileKeys(file)
+	if err != nil {
+		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
+	}
+	encrypted, err := ps.keyring.Encrypt(data, pkeys)
+	if err != nil {
+		return xerrors.Errorf("could not encrypt password file data: %w", err)
+	}
+
+	msg := fmt.Sprintf("Created new password file %q.", file)
+	if _, err := ps.store.Stat(file); err == nil {
+		msg = fmt.Sprintf("Updated password file %q.", file)
+	}
+	cb := func() error {
+		return ps.store.WriteFile(file, encrypted, mode)
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not write to password file %q: %w", file, err)
+	}
+	return nil
+}
+
+// UpdateFile is similar to WriteFile, but fails if target file doesn't exist.
+func (ps *PasswordStore) UpdateFile(path string, data []byte) error {
+	file := filepath.Clean(filepath.Join("./", path+".gpg"))
+	pkeys, err := ps.FileKeys(file)
+	if err != nil {
+		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
+	}
+	encrypted, err := ps.keyring.Encrypt(data, pkeys)
+	if err != nil {
+		return xerrors.Errorf("could not encrypt password file data: %w", err)
+	}
+
+	msg := fmt.Sprintf("Updated password file %q.", file)
+	cb := func() error {
+		return ps.store.UpdateFile(file, encrypted)
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not update password file %q: %w", file, err)
+	}
+	return nil
+}
+
+// CreateFile is similar to WriteFile, but fails if target file already exists.
+func (ps *PasswordStore) CreateFile(path string, data []byte, mode os.FileMode) error {
+	file := filepath.Clean(filepath.Join("./", path+".gpg"))
+	pkeys, err := ps.FileKeys(file)
+	if err != nil {
+		return xerrors.Errorf("could not find appropriate keys for file %q: %w", file, err)
+	}
+	encrypted, err := ps.keyring.Encrypt(data, pkeys)
+	if err != nil {
+		return xerrors.Errorf("could not encrypt password file data: %w", err)
+	}
+
+	msg := fmt.Sprintf("Created new password file %q.", file)
+	cb := func() error {
+		return ps.store.CreateFile(file, encrypted, os.FileMode(0644))
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not create new password file %q: %w", file, err)
+	}
+	return nil
+}
+
+func (ps *PasswordStore) ReplaceFile(oldpath, newpath string, data []byte) error {
+	oldfile := filepath.Clean(filepath.Join("./", oldpath+".gpg"))
+	newfile := filepath.Clean(filepath.Join("./", newpath+".gpg"))
+	pkeys, err := ps.FileKeys(newfile)
+	if err != nil {
+		return xerrors.Errorf("could not find appropriate keys for file %q: %w", newfile, err)
+	}
+	encrypted, err := ps.keyring.Encrypt(data, pkeys)
+	if err != nil {
+		return xerrors.Errorf("could not encrypt password file data: %w", err)
+	}
+
+	msg := fmt.Sprintf("Replaced file %q with %q.", oldfile, newfile)
+	cb := func() error {
+		if err := ps.store.Rename(oldfile, newfile); err != nil {
+			return err
+		}
+		return ps.store.UpdateFile(newfile, encrypted)
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not create replace password file %q to %q: %w", oldfile, newfile, err)
+	}
+	return nil
+}
+
+func (ps *PasswordStore) Remove(file string) error {
+	msg := fmt.Sprintf("Removed password file %q.", file)
+	cb := func() error {
+		return ps.store.RemoveFile(file)
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not remove password file %q: %w", file, err)
+	}
+	return nil
+}
+
+func (ps *PasswordStore) RemoveAll(file string) error {
+	return xerrors.New("TODO")
+}
+
+func (ps *PasswordStore) Rename(oldpath, newpath string) error {
+	msg := fmt.Sprintf("Renamed %q to %q.", oldpath, newpath)
+	cb := func() error {
+		return ps.store.Rename(oldpath, newpath)
+	}
+	if err := ps.store.Apply(msg, cb); err != nil {
+		return xerrors.Errorf("could not rename password file %q to %q: %w", oldpath, newpath, err)
+	}
 	return nil
 }
 
@@ -278,4 +293,23 @@ func (ps *PasswordStore) FileKeys(path string) ([]*gpg.PublicKey, error) {
 		clone = append(clone, newKey)
 	}
 	return clone, nil
+}
+
+// Format prepares password file content from a password and user data in the
+// unencrypted form.
+func Format(password string, data []byte) []byte {
+	var buf bytes.Buffer
+	buf.WriteString(password + "\n")
+	buf.Write(data)
+	return buf.Bytes()
+}
+
+// Parse splits the decrypted password file content into a password and
+// additional user data.
+func Parse(decrypted []byte) (string, []byte) {
+	index := bytes.IndexRune(decrypted, '\n')
+	if index == -1 {
+		return string(decrypted), nil
+	}
+	return string(decrypted[:index]), decrypted[index+1:]
 }
