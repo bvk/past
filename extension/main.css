@@ -95,3 +95,11 @@ button:not(:disabled):hover {
 .password-element {
 		width: 8em;
 }
+
+.w6em {
+		width: 6em;
+}
+
+.w4em {
+		width: 4em;
+}

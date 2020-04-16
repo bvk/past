@@ -21,18 +21,41 @@
 
 			<div class="content">
 				<div class="row">
-					<span class="column" style="width:6em">User Name</span>
+					<span class="column w6em">User Name</span>
 					<input class="column-elastic newkey-page-username"></input>
 				</div>
 
 				<div class="row">
-					<span class="column" style="width:6em">User Email</span>
+					<span class="column w6em">User Email</span>
 					<input class="column-elastic newkey-page-useremail"></input>
 				</div>
 
 				<div class="row">
-					<span class="column" style="width:6em">Passphrase</span>
-					<input class="column-elastic newkey-page-passphrase" type="password"></input>
+					<span class="column w6em">Key Options</span>
+					<select class="column-elastic newkey-page-key-length">
+						<option value="4096">4096 Bits</option>
+						<option value="2048">2048 Bits</option>
+						<option value="1024">1024 Bits</option>
+					</select>
+					<select class="column-elastic newkey-page-key-years">
+						<option value="0">Doesn't Expire</option>
+						<option value="1">1 Year</option>
+						<option value="2">2 Years</option>
+						<option value="3">3 Years</option>
+						<option value="4">4 Years</option>
+						<option value="5">5 Years</option>
+						<option value="10">10 Years</option>
+					</select>
+				</div>
+
+				<div class="row">
+					<span class="column-elastic">Passphrase</span>
+				</div>
+
+				<div class="row">
+					<input class="column-elastic w4em newkey-page-passphrase" type="password"></input>
+					<input class="column-elastic w4em newkey-page-repeat-passphrase" type="password"></input>
+					<button class="column material-icons newkey-page-toggle-button">visibility_off</button>
 				</div>
 			</div>
 
@@ -230,13 +253,13 @@
 
 			<div class="content">
 				<div class="row">
-					<span class="column" style="width:6em">Username</span>
+					<span class="column w6em">Username</span>
 					<input class="column-elastic view-page-username" readonly></input>
 					<button class="column material-icons view-page-username-copy">content_copy</button>
 				</div>
 
 				<div class="row">
-					<span class="column" style="width:6em">Password</span>
+					<span class="column w6em">Password</span>
 					<input class="column-elastic view-page-password" type="password" readonly></input>
 					<button class="column material-icons view-page-password-toggle">visibility_off</button>
 					<button class="column material-icons view-page-password-copy">content_copy</button>
@@ -273,12 +296,12 @@
 			<div class="content">
 				<div>
 					<div class="row">
-						<div class="column-elastic" style="width:6em">Website</div>
+						<div class="column-elastic w6em">Website</div>
 						<input class="column-elastic edit-page-sitename" type="text" placeholder="website name"></input>
 					</div>
 
 					<div class="row">
-						<span class="column-elastic" style="width:6em">Username</span>
+						<span class="column-elastic w6em">Username</span>
 						<input class="column-elastic edit-page-username" type="text" placeholder="account name"></input>
 					</div>
 

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -23,7 +24,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func cmdChrome(flags *pflag.FlagSet, args []string) error {
+func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
+	// Redirect the logs to a file.
+	file := filepath.Join(os.TempDir(), fmt.Sprintf("past-%s.log", os.Getenv("USER")))
+	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.FileMode(0600))
+	if err != nil {
+		return xerrors.Errorf("could not open log file %q: %w", file, err)
+	}
+	log.SetOutput(logfile)
+	defer func() {
+		if status != nil {
+			log.Printf("error: chrome operation has failed: %w", err)
+		}
+	}()
+
 	// When invoked by chrome, PATH may not be the same, so fix it to a known
 	// good defaults. For example, gpg command from GPGTools package in Mac OS X
 	// is installed into /usr/local/bin directory, but it is not part of the PATH
@@ -106,6 +120,8 @@ type CreateKeyRequest struct {
 	Name       string `json:"name"`
 	Email      string `json:"email"`
 	Passphrase string `json:"passphrase"`
+	KeyLength  int    `json:"key_length,string"`
+	KeyYears   int    `json:"key_years,string"`
 }
 
 type CreateKeyResponse struct {
@@ -292,7 +308,7 @@ func (c *ChromeHandler) doCreateKey(ctx context.Context, req *CreateKeyRequest, 
 	if c.keyring != nil {
 		return xerrors.Errorf("gpg keyring already exists: %w", os.ErrInvalid)
 	}
-	ring, err := gpg.Create(req.Name, req.Email, req.Passphrase)
+	ring, err := gpg.Create(req.Name, req.Email, req.Passphrase, req.KeyLength, req.KeyYears)
 	if err != nil {
 		return err
 	}

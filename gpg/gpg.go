@@ -4,6 +4,7 @@ package gpg
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -34,7 +35,7 @@ func NewKeyring(path string) (*Keyring, error) {
 	return g, nil
 }
 
-func Create(name, email, passphrase string) (*Keyring, error) {
+func Create(name, email, passphrase string, length, years int) (*Keyring, error) {
 	// Kill any existing gpg agent to avoid the following error:
 	//
 	// gpg: agent_genkey failed: No such file or directory
@@ -52,14 +53,20 @@ func Create(name, email, passphrase string) (*Keyring, error) {
 		}
 	}()
 
+	// Key expiry date in years.
+	expireDate := "0"
+	if years > 0 {
+		expireDate = fmt.Sprintf("%dy", years)
+	}
+
 	content := `
 Key-Type: default
-Key-Length: 4096
+Key-Length: ` + fmt.Sprintf("%d", length) + `
 Subkey-Type: default
-Subkey-Length: 4096
+Subkey-Length: ` + fmt.Sprintf("%d", length) + `
 Name-Real: ` + name + `
 Name-Email: ` + email + `
-Expire-Date: 0
+Expire-Date: ` + expireDate + `
 Passphrase: ` + passphrase + `
 `
 	if _, err := file.Write([]byte(content)); err != nil {
