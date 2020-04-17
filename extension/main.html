@@ -71,37 +71,91 @@
 		<div id="newrepo-page-template" style="display:none">
 			<div class="row header">
 				<button class="column material-icons newrepo-page-back-button">navigate_before</button>
-				<span class="column-elastic header-title">Create Password Store</span>
+				<span class="column-elastic header-title">New Password Store</span>
 				<button class="column material-icons newrepo-page-close-button">clear</button>
 			</div>
 
-			<hr/>
-
 			<div class="content">
-				<div class="row">
-					<span class="column-elastic">Local Key</span>
+				<div class="row newrepo-page-tab-bar">
+					<button class="column-elastic newrepo-page-create-button">
+						<span class="button-text material-icons">create_new_folder</span>
+						<span class="button-text">Create</span>
+					</button>
+					<button class="column-elastic newrepo-page-import-button">
+						<span class="button-text material-icons">cloud_download</span>
+						<span class="button-text">Import</span>
+					</button>
 				</div>
-				<ul>
-					<li class="newrepo-page-localkey-item">
-						<div class="row">
-							<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
-							<span class="column newrepo-page-key"></span>
-						</div>
-					</li>
-				</ul>
 
-				<div class="newrepo-page-remotekeys-section" style="display:none">
+				<hr/>
+
+				<div class="newrepo-page-create-tab">
 					<div class="row">
-						<span class="column-elastic">Remote Keys</span>
+						<span class="column-elastic">Local Key</span>
 					</div>
 					<ul>
-						<li class="newrepo-page-remotekey-item">
+						<li class="newrepo-page-localkey-item">
 							<div class="row">
 								<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
 								<span class="column newrepo-page-key"></span>
 							</div>
 						</li>
 					</ul>
+
+					<div class="newrepo-page-remotekeys-section" style="display:none">
+						<div class="row">
+							<span class="column-elastic">Remote Keys</span>
+						</div>
+						<ul>
+							<li class="newrepo-page-remotekey-item">
+								<div class="row">
+									<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
+									<span class="column newrepo-page-key"></span>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="newrepo-page-import-tab">
+					<div class="row">
+						<span class="column w6em">Provider</span>
+						<select class="column-elastic newrepo-page-gitserver">
+							<optgroup>
+								<option value="ssh">Custom Server using SSH protocol</option>
+								<option value="https">Custom Server using HTTPS protocol</option>
+								<option value="git">Custom Server using GIT protocol</option>
+							</optgroup>
+							<optgroup>
+								<option value="github-ssh">Github using SSH protocol</option>
+								<option value="github-https">Github using HTTPS protocol</option>
+							</optgroup>
+						</select>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">Username</span>
+						<input class="column-elastic newrepo-page-gituser" placeholder="username"></input>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">Password</span>
+						<input class="column-elastic newrepo-page-gitpass" type="password" placeholder="leave empty for password-less authentication"></input>
+						<button class="column material-icons newrepo-page-gitpass-toggle">visibility_off</button>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">Hostname</span>
+						<input class="column-elastic newrepo-page-githost" placeholder="hostname.com:1234"></input>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">Repo Path</span>
+						<input class="column-elastic newrepo-page-gitpath" placeholder="path/to/repository.git"></input>
+					</div>
+
+					<!-- TODO: Add a checkbox for ssh-key fingerprint acceptance -->
+
 				</div>
 			</div>
 

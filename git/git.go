@@ -196,3 +196,31 @@ func (g *Dir) Apply(msg string, cb func() error) (status error) {
 	}
 	return nil
 }
+
+func (g *Dir) AddRemote(name, url string) error {
+	cmd := exec.Command("git", "-C", g.dir, "remote", "add", name, url)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not add git remote %q: %w", url, err)
+	}
+	return nil
+}
+
+func (g *Dir) FetchAll() error {
+	cmd := exec.Command("git", "-C", g.dir, "fetch", "--all")
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not fetch all remotes: %w", err)
+	}
+	return nil
+}
+
+func (g *Dir) SetConfg(key, value string) error {
+	cmd := exec.Command("git", "-C", g.dir, "config", "--local", key, value)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not git config key %q: %w", key, err)
+	}
+	return nil
+}
+
+func (g *Dir) GetConfig(key string) (string, error) {
+	return "", xerrors.Errorf("TODO")
+}

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -70,6 +71,7 @@ type ChromeRequest struct {
 	CheckStatus *CheckStatusRequest `json:"check_status"`
 	CreateKey   *CreateKeyRequest   `json:"create_key"`
 	CreateRepo  *CreateRepoRequest  `json:"create_repo"`
+	ImportRepo  *ImportRepoRequest  `json:"import_repo"`
 
 	AddFile    *AddFileRequest    `json:"add_file"`
 	EditFile   *EditFileRequest   `json:"edit_file"`
@@ -86,6 +88,7 @@ type ChromeResponse struct {
 	CheckStatus *CheckStatusResponse `json:"check_status"`
 	CreateKey   *CreateKeyResponse   `json:"create_key"`
 	CreateRepo  *CreateRepoResponse  `json:"create_repo"`
+	ImportRepo  *ImportRepoResponse  `json:"import_repo"`
 
 	AddFile    *AddFileResponse    `json:"add_file"`
 	EditFile   *EditFileResponse   `json:"edit_file"`
@@ -114,6 +117,17 @@ type CreateRepoRequest struct {
 }
 
 type CreateRepoResponse struct {
+}
+
+type ImportRepoRequest struct {
+	Protocol string `json:"protocol"`
+	Hostname string `json:"hostname"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Path     string `json:"path"`
+}
+
+type ImportRepoResponse struct {
 }
 
 type CreateKeyRequest struct {
@@ -197,7 +211,6 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	if err := json.Unmarshal(reqBuf, req); err != nil {
 		return xerrors.Errorf("could not unmarshal input message: %w", err)
 	}
-	log.Printf("request -> %q", reqBuf)
 
 	var resp ChromeResponse
 	switch {
@@ -214,6 +227,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	case req.CreateRepo != nil:
 		resp.CreateRepo = new(CreateRepoResponse)
 		if err := c.doCreateRepo(ctx, req.CreateRepo, resp.CreateRepo); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.ImportRepo != nil:
+		resp.ImportRepo = new(ImportRepoResponse)
+		if err := c.doImportRepo(ctx, req.ImportRepo, resp.ImportRepo); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.AddFile != nil:
@@ -289,15 +307,13 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 		}
 		pkeys := c.keyring.PublicKeys()
 		for _, pkey := range pkeys {
-			if !pkey.ExpiresAt.IsZero() && pkey.ExpiresAt.Before(now) {
+			if !pkey.CanEncrypt || !pkey.Trusted || now.After(pkey.ExpiresAt) {
 				continue
 			}
-			if pkey.CanEncrypt && pkey.Trusted {
-				if _, ok := skeyMap[pkey.Fingerprint]; ok {
-					resp.LocalKeys = append(resp.LocalKeys, pkey)
-				} else {
-					resp.RemoteKeys = append(resp.RemoteKeys, pkey)
-				}
+			if _, ok := skeyMap[pkey.Fingerprint]; ok {
+				resp.LocalKeys = append(resp.LocalKeys, pkey)
+			} else {
+				resp.RemoteKeys = append(resp.RemoteKeys, pkey)
 			}
 		}
 	}
@@ -335,6 +351,75 @@ func (c *ChromeHandler) doCreateRepo(ctx context.Context, req *CreateRepoRequest
 		return err
 	}
 	c.pstore = pstore
+	return nil
+}
+
+func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest, resp *ImportRepoResponse) (status error) {
+	if c.keyring == nil {
+		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
+	}
+
+	// TODO: When ssh is chosen, we could verify if ssh passphrase is cached and
+	// report an user friendly error.
+
+	reqUsername := url.QueryEscape(req.Username)
+	reqPath := filepath.Clean(filepath.Join("/", req.Path))
+
+	originURL := ""
+	switch req.Protocol {
+	case "ssh":
+		originURL = fmt.Sprintf("ssh://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	case "https":
+		originURL = fmt.Sprintf("https://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	case "git":
+		originURL = fmt.Sprintf("git://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	default:
+		return xerrors.Errorf("unsupported git url protocol %q: %w", req.Protocol, os.ErrInvalid)
+	}
+
+	repo, err := git.Init(c.dir)
+	if err != nil {
+		return xerrors.Errorf("could not git init: %w", err)
+	}
+	defer func() {
+		if status != nil {
+			if err := os.RemoveAll(c.dir); err != nil {
+				log.Panicf("could not remove temporary git directory %q: %w", c.dir, err)
+			}
+		}
+	}()
+
+	// Create credential store file.
+	if len(req.Password) > 0 {
+		reqPassword := url.QueryEscape(req.Password)
+		creds := fmt.Sprintf("%s://%s:%s@%s\n", req.Protocol, reqUsername, reqPassword, req.Hostname)
+		credStore := filepath.Join(c.dir, ".git-credentials")
+		file, err := os.OpenFile(credStore, os.O_CREATE|os.O_WRONLY, os.FileMode(0600))
+		if err != nil {
+			return xerrors.Errorf("could not create credential store file %q: %w", credStore, err)
+		}
+		defer file.Close()
+		if _, err := file.Write([]byte(creds)); err != nil {
+			return xerrors.Errorf("could not write to credentials file: %w", err)
+		}
+		// Configure git credential store.
+		configValue := fmt.Sprintf("store --file=%s", credStore)
+		if err := repo.SetConfg("credential.helper", configValue); err != nil {
+			return xerrors.Errorf("could not configure credential store: %w", err)
+		}
+	}
+
+	if err := repo.AddRemote("origin", originURL); err != nil {
+		return xerrors.Errorf("could not add remote origin: %w", err)
+	}
+
+	if err := repo.FetchAll(); err != nil {
+		return xerrors.Errorf("could not git fetch from remotes: %w", err)
+	}
+
+	if err := repo.Reset("origin/master"); err != nil {
+		return xerrors.Errorf("could not reset working copy to remote master: %w", err)
+	}
 	return nil
 }
 

@@ -38,7 +38,13 @@ textarea {
 
 button {
 		border: none;
+		line-height: 1.6;
+		font-size: 12pt;
 		background-color: transparent;
+}
+
+.button-text {
+		vertical-align: middle;
 }
 
 button:not(:disabled):hover {
@@ -98,6 +104,10 @@ button:not(:disabled):hover {
 
 .w6em {
 		width: 6em;
+}
+
+.w8em {
+		width: 8em;
 }
 
 .w4em {
