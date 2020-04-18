@@ -89,9 +89,10 @@ function onSettingsPageDisplay(page) {
 
     let remoteCheck = page.getElementsByClassName("settings-page-remote-check")[0];
     let remoteButton = page.getElementsByClassName("settings-page-remote-button")[0];
-    if (!repoReady || !params.check_status.git_remotes || params.check_status.git_remotes.length == 0) {
+    if (!repoReady || !params.check_status.remote || params.check_status.remote == "") {
       remoteCheck.textContent = "clear";
       remoteButton.textContent = "create_new_folder";
+      remoteButton.disabled = !repoReady;
     } else {
       remoteReady = true;
       remoteButton.disabled = false;
@@ -143,9 +144,9 @@ function onSettingsPageRemoteButton(page, remoteButton) {
     return
   }
 
-  if (!params.check_status.git_remotes || params.check_status.git_remotes.length == 0) {
-    // Show remote repository page.
-    setOperationStatus("TODO: Show add remote page.");
+  if (!params.check_status.remote || params.check_status.remote == "") {
+    let newremotePage = createNewremotePage();
+    showPage(newremotePage, "newremote-page", onNewremotePageDisplay);
     return;
   }
 

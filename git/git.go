@@ -57,7 +57,23 @@ func (g *Dir) Remotes() ([]string, error) {
 	return strings.Fields(stdout.String()), nil
 }
 
-func (g *Dir) RemoteURL(remote string) (string, error) {
+func (g *Dir) AddRemote(name, url string) error {
+	cmd := exec.Command("git", "-C", g.dir, "remote", "add", name, url)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not add remote %q: %w", name, err)
+	}
+	return nil
+}
+
+func (g *Dir) RemoveRemote(name string) error {
+	cmd := exec.Command("git", "-C", g.dir, "remote", "remove", name)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not remove remote %q: %w", name, err)
+	}
+	return nil
+}
+
+func (g *Dir) GetRemoteURL(remote string) (string, error) {
 	cmd := exec.Command("git", "-C", g.dir, "remote", "get-url", remote)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -206,14 +222,6 @@ func (g *Dir) Apply(msg string, cb func() error) (status error) {
 	return nil
 }
 
-func (g *Dir) AddRemote(name, url string) error {
-	cmd := exec.Command("git", "-C", g.dir, "remote", "add", name, url)
-	if err := cmd.Run(); err != nil {
-		return xerrors.Errorf("could not add git remote %q: %w", url, err)
-	}
-	return nil
-}
-
 func (g *Dir) FetchAll() error {
 	cmd := exec.Command("git", "-C", g.dir, "fetch", "--all")
 	if err := cmd.Run(); err != nil {
@@ -238,8 +246,22 @@ func (g *Dir) SetConfg(key, value string) error {
 	return nil
 }
 
+func (g *Dir) UnsetConfig(key string) error {
+	cmd := exec.Command("git", "-C", g.dir, "config", "--local", "--unset", key)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not unset git config key %q: %w", key, err)
+	}
+	return nil
+}
+
 func (g *Dir) GetConfig(key string) (string, error) {
-	return "", xerrors.Errorf("TODO")
+	cmd := exec.Command("git", "-C", g.dir, "config", "--local", "--unset", key)
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return "", xerrors.Errorf("could not unset git config key %q: %w", key, err)
+	}
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 func (g *Dir) IsAncestor(commit1, commit2 string) (bool, error) {

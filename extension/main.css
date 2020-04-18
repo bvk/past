@@ -137,6 +137,10 @@ button:not(:disabled):hover {
 		width: 40em;
 }
 
+.h25em {
+		height: 25em;
+}
+
 .hidden {
 		display: none;
 }

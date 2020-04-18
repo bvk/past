@@ -53,27 +53,27 @@ function onSyncPageDisplay(page) {
   ltitle.textContent = params.sync_remote.head.title;
 
   let rcommit = page.getElementsByClassName("sync-page-remote-commit")[0];
-  rcommit.textContent = params.sync_remote.origin.commit.substr(0,8);
+  rcommit.textContent = params.sync_remote.remote.commit.substr(0,8);
 
   let rauthor = page.getElementsByClassName("sync-page-remote-author")[0];
-  rauthor.textContent = params.sync_remote.origin.author;
+  rauthor.textContent = params.sync_remote.remote.author;
 
   let rauthordate = page.getElementsByClassName("sync-page-remote-authordate")[0];
-  rauthordate.textContent = params.sync_remote.origin.author_date;
+  rauthordate.textContent = params.sync_remote.remote.author_date;
 
   let rtitle = page.getElementsByClassName("sync-page-remote-title")[0];
-  rtitle.textContent = params.sync_remote.origin.title;
+  rtitle.textContent = params.sync_remote.remote.title;
 
   let pullButton = page.getElementsByClassName("sync-page-pull-button")[0];
   let pushButton = page.getElementsByClassName("sync-page-push-button")[0];
-  if (params.sync_remote.head.commit == params.sync_remote.origin.commit) {
+  if (params.sync_remote.head.commit == params.sync_remote.remote.commit) {
     pullButton.disabled = true;
     pushButton.disabled = true;
     setOperationStatus("Synced.");
     return;
   }
 
-  if (params.sync_remote.newer_commit == params.sync_remote.origin.commit) {
+  if (params.sync_remote.newer_commit == params.sync_remote.remote.commit) {
     pullButton.disabled = false;
     return;
   }

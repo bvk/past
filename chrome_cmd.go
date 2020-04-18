@@ -72,6 +72,7 @@ type ChromeRequest struct {
 	CreateKey   *CreateKeyRequest   `json:"create_key"`
 	CreateRepo  *CreateRepoRequest  `json:"create_repo"`
 	ImportRepo  *ImportRepoRequest  `json:"import_repo"`
+	AddRemote   *AddRemoteRequest   `json:"add_remote"`
 	SyncRemote  *SyncRemoteRequest  `json:"sync_remote"`
 
 	AddFile    *AddFileRequest    `json:"add_file"`
@@ -90,6 +91,7 @@ type ChromeResponse struct {
 	CreateKey   *CreateKeyResponse   `json:"create_key"`
 	CreateRepo  *CreateRepoResponse  `json:"create_repo"`
 	ImportRepo  *ImportRepoResponse  `json:"import_repo"`
+	AddRemote   *AddRemoteResponse   `json:"add_remote"`
 	SyncRemote  *SyncRemoteResponse  `json:"sync_remote"`
 
 	AddFile    *AddFileResponse    `json:"add_file"`
@@ -111,7 +113,7 @@ type CheckStatusResponse struct {
 
 	PasswordStoreKeys []*gpg.PublicKey `json:"password_store_keys"`
 
-	GitRemotes [][2]string `json:"git_remotes"`
+	Remote string `json:"remote"`
 }
 
 type CreateRepoRequest struct {
@@ -132,6 +134,18 @@ type ImportRepoRequest struct {
 type ImportRepoResponse struct {
 }
 
+type AddRemoteRequest struct {
+	Protocol string `json:"protocol"`
+	Hostname string `json:"hostname"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Path     string `json:"path"`
+}
+
+type AddRemoteResponse struct {
+	SyncRemote *SyncRemoteResponse `json:"sync_remote"`
+}
+
 type SyncRemoteRequest struct {
 	Fetch bool `json:"fetch"`
 	Pull  bool `json:"pull"`
@@ -140,7 +154,7 @@ type SyncRemoteRequest struct {
 
 type SyncRemoteResponse struct {
 	Head   *git.LogItem `json:"head"`
-	Origin *git.LogItem `json:"origin"`
+	Remote *git.LogItem `json:"remote"`
 
 	NewerCommit string `json:"newer_commit"`
 }
@@ -249,6 +263,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 		if err := c.doImportRepo(ctx, req.ImportRepo, resp.ImportRepo); err != nil {
 			resp.Status = err.Error()
 		}
+	case req.AddRemote != nil:
+		resp.AddRemote = new(AddRemoteResponse)
+		if err := c.doAddRemote(ctx, req.AddRemote, resp.AddRemote); err != nil {
+			resp.Status = err.Error()
+		}
 	case req.SyncRemote != nil:
 		resp.SyncRemote = new(SyncRemoteResponse)
 		if err := c.doSyncRemote(ctx, req.SyncRemote, resp.SyncRemote); err != nil {
@@ -307,14 +326,8 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 		resp.PasswordStoreKeys = c.pstore.DefaultKeys()
 	}
 	if c.repo != nil {
-		remotes, _ := c.repo.Remotes()
-		for _, remote := range remotes {
-			addr, err := c.repo.RemoteURL(remote)
-			if err != nil {
-				resp.GitRemotes = nil
-				break
-			}
-			resp.GitRemotes = append(resp.GitRemotes, [2]string{remote, addr})
+		if addr, err := c.repo.GetRemoteURL("past-remote"); err == nil {
+			resp.Remote = addr
 		}
 	}
 	if c.keyring != nil {
@@ -385,14 +398,15 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 	reqUsername := url.QueryEscape(req.Username)
 	reqPath := filepath.Clean(filepath.Join("/", req.Path))
 
-	originURL := ""
+	remoteURL := ""
+	remoteName := "past-remote"
 	switch req.Protocol {
 	case "ssh":
-		originURL = fmt.Sprintf("ssh://%s@%s%s", reqUsername, req.Hostname, reqPath)
+		remoteURL = fmt.Sprintf("ssh://%s@%s%s", reqUsername, req.Hostname, reqPath)
 	case "https":
-		originURL = fmt.Sprintf("https://%s@%s%s", reqUsername, req.Hostname, reqPath)
+		remoteURL = fmt.Sprintf("https://%s@%s%s", reqUsername, req.Hostname, reqPath)
 	case "git":
-		originURL = fmt.Sprintf("git://%s@%s%s", reqUsername, req.Hostname, reqPath)
+		remoteURL = fmt.Sprintf("git://%s@%s%s", reqUsername, req.Hostname, reqPath)
 	default:
 		return xerrors.Errorf("unsupported git url protocol %q: %w", req.Protocol, os.ErrInvalid)
 	}
@@ -413,7 +427,7 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 	if len(req.Password) > 0 {
 		reqPassword := url.QueryEscape(req.Password)
 		creds := fmt.Sprintf("%s://%s:%s@%s\n", req.Protocol, reqUsername, reqPassword, req.Hostname)
-		credStore := filepath.Join(c.dir, ".git-credentials")
+		credStore := filepath.Join(c.dir, ".past-remote-credentials")
 		file, err := os.OpenFile(credStore, os.O_CREATE|os.O_WRONLY, os.FileMode(0600))
 		if err != nil {
 			return xerrors.Errorf("could not create credential store file %q: %w", credStore, err)
@@ -429,17 +443,92 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 		}
 	}
 
-	if err := repo.AddRemote("origin", originURL); err != nil {
-		return xerrors.Errorf("could not add remote origin: %w", err)
+	if err := repo.AddRemote(remoteName, remoteURL); err != nil {
+		return xerrors.Errorf("could not add remote: %w", err)
 	}
 
 	if err := repo.FetchAll(); err != nil {
 		return xerrors.Errorf("could not git fetch from remotes: %w", err)
 	}
 
-	if err := repo.Reset("origin/master"); err != nil {
+	if err := repo.Reset(fmt.Sprintf("%s/master", remoteName)); err != nil {
 		return xerrors.Errorf("could not reset working copy to remote master: %w", err)
 	}
+	return nil
+}
+
+func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, resp *AddRemoteResponse) (status error) {
+	if c.repo == nil {
+		return xerrors.Errorf("git repository is not initialized: %w", os.ErrInvalid)
+	}
+
+	reqUsername := url.QueryEscape(req.Username)
+	reqPath := filepath.Clean(filepath.Join("/", req.Path))
+
+	remoteURL := ""
+	remoteName := "past-remote"
+	switch req.Protocol {
+	case "ssh":
+		remoteURL = fmt.Sprintf("ssh://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	case "https":
+		remoteURL = fmt.Sprintf("https://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	case "git":
+		remoteURL = fmt.Sprintf("git://%s@%s%s", reqUsername, req.Hostname, reqPath)
+	default:
+		return xerrors.Errorf("unsupported git url protocol %q: %w", req.Protocol, os.ErrInvalid)
+	}
+
+	if err := c.repo.AddRemote(remoteName, remoteURL); err != nil {
+		return xerrors.Errorf("could not add remote %q: %w", remoteName, err)
+	}
+	defer func() {
+		if status != nil {
+			if err := c.repo.RemoveRemote(remoteName); err != nil {
+				log.Panicf("could not undo adding remote %q: %w", remoteName, err)
+			}
+		}
+	}()
+
+	// Create credential store file. FIXME: Existing credentials file if any will
+	// be overwritten.
+
+	if len(req.Password) > 0 {
+		reqPassword := url.QueryEscape(req.Password)
+		creds := fmt.Sprintf("%s://%s:%s@%s\n", req.Protocol, reqUsername, reqPassword, req.Hostname)
+		credStore := filepath.Join(c.dir, ".past-remote-credentials")
+		file, err := os.OpenFile(credStore, os.O_CREATE|os.O_WRONLY, os.FileMode(0600))
+		if err != nil {
+			return xerrors.Errorf("could not create credential store file %q: %w", credStore, err)
+		}
+		defer file.Close()
+		if _, err := file.Write([]byte(creds)); err != nil {
+			return xerrors.Errorf("could not write to credentials file: %w", err)
+		}
+		// Configure git credential store.
+		configValue := fmt.Sprintf("store --file=%s", credStore)
+		if err := c.repo.SetConfg("credential.helper", configValue); err != nil {
+			return xerrors.Errorf("could not configure credential store: %w", err)
+		}
+		defer func() {
+			if status != nil {
+				if err := os.Remove(credStore); err != nil {
+					log.Printf("error: could not remove credential store: %w", err)
+				}
+				if err := c.repo.UnsetConfig("credential.helper"); err != nil {
+					log.Printf("error: could not unset credential helper: %w", err)
+				}
+			}
+		}()
+	}
+
+	syncReq := &SyncRemoteRequest{Fetch: true}
+	syncResp := new(SyncRemoteResponse)
+	if err := c.doSyncRemote(ctx, syncReq, syncResp); err != nil {
+		return xerrors.Errorf("could not determine the diff with remote %q: %w", remoteName, err)
+	}
+	resp.SyncRemote = syncResp
+	data, _ := json.MarshalIndent(resp, "", "  ")
+	log.Printf("resp: %s\n", data)
 	return nil
 }
 
@@ -447,37 +536,39 @@ func (c *ChromeHandler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest
 	if c.repo == nil {
 		return xerrors.Errorf("git repository is not initialized: %w", os.ErrInvalid)
 	}
+	remoteName := "past-remote"
+	remoteMaster := "past-remote/master"
 	switch {
 	case req.Fetch:
-		if err := c.repo.Fetch("origin"); err != nil {
-			return xerrors.Errorf("could not fetch origin: %w", err)
+		if err := c.repo.Fetch(remoteName); err != nil {
+			return xerrors.Errorf("could not fetch from remote: %w", err)
 		}
 	case req.Push:
-		if err := c.repo.PushOverwrite("origin", "master"); err != nil {
-			return xerrors.Errorf("could not push to origin/master: %w", err)
+		if err := c.repo.PushOverwrite(remoteName, "master"); err != nil {
+			return xerrors.Errorf("could not push to %q: %w", remoteMaster, err)
 		}
 	case req.Pull:
-		if err := c.repo.Reset("origin/master"); err != nil {
-			return xerrors.Errorf("could not pull from origin/master: %w", err)
+		if err := c.repo.Reset(remoteMaster); err != nil {
+			return xerrors.Errorf("could not pull from %q: %w", remoteMaster, err)
 		}
 	}
 	head, err := c.repo.GetLogItem("HEAD")
 	if err != nil {
 		return xerrors.Errorf("could not get head log tip: %w", err)
 	}
-	origin, err := c.repo.GetLogItem("origin/master")
+	remote, err := c.repo.GetLogItem(remoteMaster)
 	if err != nil {
-		return xerrors.Errorf("could not get origin/master log tip: %w", err)
+		return xerrors.Errorf("could not get %q log tip: %w", remoteMaster, err)
 	}
 	resp.Head = head
-	resp.Origin = origin
+	resp.Remote = remote
 
-	if head.Commit != origin.Commit {
-		if yes, _ := c.repo.IsAncestor(head.Commit, origin.Commit); yes {
-			// Remote origin/master has more commits than head.
-			resp.NewerCommit = origin.Commit
-		} else if yes, _ := c.repo.IsAncestor(origin.Commit, head.Commit); yes {
-			// Head has more commits than origin/master.
+	if head.Commit != remote.Commit {
+		if yes, _ := c.repo.IsAncestor(head.Commit, remote.Commit); yes {
+			// Remote master has more commits than head.
+			resp.NewerCommit = remote.Commit
+		} else if yes, _ := c.repo.IsAncestor(remote.Commit, head.Commit); yes {
+			// Head has more commits than remote master.
 			resp.NewerCommit = head.Commit
 		}
 	}

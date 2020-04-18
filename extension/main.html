@@ -166,6 +166,62 @@
 			</div>
 		</div>
 
+		<!-- new remote page -->
+
+		<div id="newremote-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons newremote-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Setup Remote Repository</span>
+				<button class="column material-icons newremote-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content w25em h25em">
+				<div class="row">
+					<span class="column w6em">Provider</span>
+					<select class="column-elastic newremote-page-gitserver">
+						<optgroup>
+							<option value="ssh">Custom Server using SSH protocol</option>
+							<option value="https">Custom Server using HTTPS protocol</option>
+							<option value="git">Custom Server using GIT protocol</option>
+						</optgroup>
+						<optgroup>
+							<option value="github-ssh">Github using SSH protocol</option>
+							<option value="github-https">Github using HTTPS protocol</option>
+						</optgroup>
+					</select>
+				</div>
+
+				<div class="row">
+					<span class="column w6em">Username</span>
+					<input class="column-elastic newremote-page-gituser" placeholder="username"></input>
+				</div>
+
+				<div class="row">
+					<span class="column w6em">Password</span>
+					<input class="column-elastic newremote-page-gitpass" type="password" placeholder="leave empty for password-less authentication"></input>
+					<button class="column material-icons newremote-page-gitpass-toggle">visibility_off</button>
+				</div>
+
+				<div class="row">
+					<span class="column w6em">Hostname</span>
+					<input class="column-elastic newremote-page-githost" placeholder="hostname.com:1234"></input>
+				</div>
+
+				<div class="row">
+					<span class="column w6em">Repo Path</span>
+					<input class="column-elastic newremote-page-gitpath" placeholder="path/to/repository.git"></input>
+				</div>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons newremote-page-undo-button" disabled>undo</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons newremote-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
 		<!-- sync remote page -->
 
 		<div id="sync-page-template" style="display:none">
@@ -253,7 +309,7 @@
 					<li>
 						<div class="row">
 							<span class="column settings-page-keys-check material-icons">remove</span>
-							<span class="column-elastic">GPG Keyring with Secrets</span>
+							<span class="column-elastic">GPG Keyring</span>
 							<button class="column settings-page-keys-button material-icons" disabled>create_new_folder</button>
 						</div>
 					</li>
@@ -261,7 +317,7 @@
 					<li>
 						<div class="row">
 							<span class="column settings-page-repo-check material-icons">remove</span>
-							<span class="column-elastic">Password Store Git Repository</span>
+							<span class="column-elastic">Password Store</span>
 							<button class="column settings-page-repo-button material-icons" disabled>create_new_folder</button>
 						</div>
 					</li>
@@ -269,7 +325,7 @@
 					<li>
 						<div class="row">
 							<span class="column settings-page-remote-check material-icons">remove</span>
-							<span class="column-elastic">Remote for the Git Repository</span>
+							<span class="column-elastic">Remote Repository</span>
 							<button class="column settings-page-remote-button material-icons" disabled>create_new_folder</button>
 						</div>
 					</li>
@@ -454,6 +510,7 @@
 		<script src="main.js"></script>
 		<script src="newkey-page.js"></script>
 		<script src="newrepo-page.js"></script>
+		<script src="newremote-page.js"></script>
 		<script src="sync-page.js"></script>
 		<script src="settings-page.js"></script>
 		<script src="search-page.js"></script>
