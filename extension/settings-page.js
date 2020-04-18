@@ -90,13 +90,13 @@ function onSettingsPageDisplay(page) {
     let remoteCheck = page.getElementsByClassName("settings-page-remote-check")[0];
     let remoteButton = page.getElementsByClassName("settings-page-remote-button")[0];
     if (!repoReady || !params.check_status.git_remotes || params.check_status.git_remotes.length == 0) {
-      remoteCheck.textContent = "cloud_off";
+      remoteCheck.textContent = "clear";
       remoteButton.textContent = "create_new_folder";
-      remoteButton.disabled = true; // TODO: Not implemented yet.
     } else {
       remoteReady = true;
+      remoteButton.disabled = false;
       remoteCheck.textContent = "done";
-      remoteButton.style.display = "none";
+      remoteButton.textContent = "navigate_next";
     }
   }
 
@@ -137,7 +137,27 @@ function onSettingsPageKeysButton(page, keysButton) {
 }
 
 function onSettingsPageRemoteButton(page, remoteButton) {
-  // TODO
+  let params = JSON.parse(page.getAttribute("page-params"));
+  if (!params) {
+    console.log("unexpected: params must exist when remote button is enabled");
+    return
+  }
+
+  if (!params.check_status.git_remotes || params.check_status.git_remotes.length == 0) {
+    // Show remote repository page.
+    setOperationStatus("TODO: Show add remote page.");
+    return;
+  }
+
+  let req = {
+    sync_remote: {
+    },
+  }
+  callBackend(req, function(req, resp) {
+    clearOperationStatus();
+    let syncPage = createSyncPage(resp);
+    showPage(syncPage, "sync-page", onSyncPageDisplay);
+  });
 }
 
 function onSettingsPageCheckReponse(page, req, resp) {

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
 )
@@ -177,6 +178,14 @@ func (g *Dir) Reset(target string) error {
 	return nil
 }
 
+func (g *Dir) PushOverwrite(remote, branch string) error {
+	cmd := exec.Command("git", "-C", g.dir, "push", "-u", "-f", remote, branch)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not push to remote %q, branch %q: %w", remote, branch, err)
+	}
+	return nil
+}
+
 func (g *Dir) Apply(msg string, cb func() error) (status error) {
 	defer func() {
 		if status != nil {
@@ -213,6 +222,14 @@ func (g *Dir) FetchAll() error {
 	return nil
 }
 
+func (g *Dir) Fetch(remote string) error {
+	cmd := exec.Command("git", "-C", g.dir, "fetch", remote)
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("could not fetch remote %q: %w", remote, err)
+	}
+	return nil
+}
+
 func (g *Dir) SetConfg(key, value string) error {
 	cmd := exec.Command("git", "-C", g.dir, "config", "--local", key, value)
 	if err := cmd.Run(); err != nil {
@@ -223,4 +240,57 @@ func (g *Dir) SetConfg(key, value string) error {
 
 func (g *Dir) GetConfig(key string) (string, error) {
 	return "", xerrors.Errorf("TODO")
+}
+
+func (g *Dir) IsAncestor(commit1, commit2 string) (bool, error) {
+	cmd := exec.Command("git", "-C", g.dir, "merge-base", "--is-ancestor", commit1, commit2)
+	cmd.Run()
+	code := cmd.ProcessState.ExitCode()
+	if code == 0 {
+		return true, nil
+	}
+	if code == 1 {
+		return false, nil
+	}
+	return false, xerrors.Errorf("process exited with status code %d: %w", code, os.ErrInvalid)
+}
+
+type LogItem struct {
+	Commit     string    `json:"commit"`
+	Author     string    `json:"author"`
+	AuthorDate time.Time `json:"author_date"`
+
+	Title string `json:"title"`
+}
+
+func (g *Dir) GetLogItem(ref string) (*LogItem, error) {
+	cmd := exec.Command("git", "-C", g.dir, "log", "-n1", ref)
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return nil, xerrors.Errorf("could not get git log item %q: %w", ref, err)
+	}
+	item := new(LogItem)
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		line := strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(line, "commit "):
+			item.Commit = strings.TrimSpace(strings.TrimPrefix(line, "commit "))
+		case strings.HasPrefix(line, "Author: "):
+			item.Author = strings.TrimSpace(strings.TrimPrefix(line, "Author: "))
+		case strings.HasPrefix(line, "Date: "):
+			ts := strings.TrimSpace(strings.TrimPrefix(line, "Date: "))
+			at, err := time.Parse("Mon Jan 2 15:04:05 2006 -0700", ts)
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse author date %q: %w", ts, err)
+			}
+			item.AuthorDate = at
+		default:
+			item.Title = strings.TrimSpace(line)
+		}
+	}
+	return item, nil
 }

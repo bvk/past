@@ -72,6 +72,7 @@ type ChromeRequest struct {
 	CreateKey   *CreateKeyRequest   `json:"create_key"`
 	CreateRepo  *CreateRepoRequest  `json:"create_repo"`
 	ImportRepo  *ImportRepoRequest  `json:"import_repo"`
+	SyncRemote  *SyncRemoteRequest  `json:"sync_remote"`
 
 	AddFile    *AddFileRequest    `json:"add_file"`
 	EditFile   *EditFileRequest   `json:"edit_file"`
@@ -89,6 +90,7 @@ type ChromeResponse struct {
 	CreateKey   *CreateKeyResponse   `json:"create_key"`
 	CreateRepo  *CreateRepoResponse  `json:"create_repo"`
 	ImportRepo  *ImportRepoResponse  `json:"import_repo"`
+	SyncRemote  *SyncRemoteResponse  `json:"sync_remote"`
 
 	AddFile    *AddFileResponse    `json:"add_file"`
 	EditFile   *EditFileResponse   `json:"edit_file"`
@@ -128,6 +130,19 @@ type ImportRepoRequest struct {
 }
 
 type ImportRepoResponse struct {
+}
+
+type SyncRemoteRequest struct {
+	Fetch bool `json:"fetch"`
+	Pull  bool `json:"pull"`
+	Push  bool `json:"push"`
+}
+
+type SyncRemoteResponse struct {
+	Head   *git.LogItem `json:"head"`
+	Origin *git.LogItem `json:"origin"`
+
+	NewerCommit string `json:"newer_commit"`
 }
 
 type CreateKeyRequest struct {
@@ -232,6 +247,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	case req.ImportRepo != nil:
 		resp.ImportRepo = new(ImportRepoResponse)
 		if err := c.doImportRepo(ctx, req.ImportRepo, resp.ImportRepo); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.SyncRemote != nil:
+		resp.SyncRemote = new(SyncRemoteResponse)
+		if err := c.doSyncRemote(ctx, req.SyncRemote, resp.SyncRemote); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.AddFile != nil:
@@ -420,6 +440,48 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 	if err := repo.Reset("origin/master"); err != nil {
 		return xerrors.Errorf("could not reset working copy to remote master: %w", err)
 	}
+	return nil
+}
+
+func (c *ChromeHandler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest, resp *SyncRemoteResponse) error {
+	if c.repo == nil {
+		return xerrors.Errorf("git repository is not initialized: %w", os.ErrInvalid)
+	}
+	switch {
+	case req.Fetch:
+		if err := c.repo.Fetch("origin"); err != nil {
+			return xerrors.Errorf("could not fetch origin: %w", err)
+		}
+	case req.Push:
+		if err := c.repo.PushOverwrite("origin", "master"); err != nil {
+			return xerrors.Errorf("could not push to origin/master: %w", err)
+		}
+	case req.Pull:
+		if err := c.repo.Reset("origin/master"); err != nil {
+			return xerrors.Errorf("could not pull from origin/master: %w", err)
+		}
+	}
+	head, err := c.repo.GetLogItem("HEAD")
+	if err != nil {
+		return xerrors.Errorf("could not get head log tip: %w", err)
+	}
+	origin, err := c.repo.GetLogItem("origin/master")
+	if err != nil {
+		return xerrors.Errorf("could not get origin/master log tip: %w", err)
+	}
+	resp.Head = head
+	resp.Origin = origin
+
+	if head.Commit != origin.Commit {
+		if yes, _ := c.repo.IsAncestor(head.Commit, origin.Commit); yes {
+			// Remote origin/master has more commits than head.
+			resp.NewerCommit = origin.Commit
+		} else if yes, _ := c.repo.IsAncestor(origin.Commit, head.Commit); yes {
+			// Head has more commits than origin/master.
+			resp.NewerCommit = head.Commit
+		}
+	}
+
 	return nil
 }
 

@@ -56,7 +56,7 @@
 					<input class="column-elastic w4em newkey-page-passphrase" type="password"></input>
 					<input class="column-elastic w4em newkey-page-repeat-passphrase" type="password"></input>
 					<button class="column material-icons newkey-page-toggle-button">visibility_off</button>
-				</div>
+ 				</div>
 			</div>
 
 			<div class="row footer">
@@ -163,6 +163,63 @@
 				<button class="column material-icons newrepo-page-undo-button" disabled>undo</button>
 				<div class="column-elastic footer-status"></div>
 				<button class="column material-icons newrepo-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
+		<!-- sync remote page -->
+
+		<div id="sync-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons sync-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Remote Repository Status</span>
+				<button class="column material-icons sync-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content w25em">
+				<div class="row">
+					<span class="column w6em">Local Tip</span>
+					<span class="column-elastic text-right sync-page-local-commit"></span>
+				</div>
+
+				<div>
+					<div class="row">
+						<span class="column-elastic text-right sync-page-local-authordate"></span>
+					</div>
+					<div class="row">
+						<span class="column-elastic text-right sync-page-local-author"></span>
+					</div>
+					<div class="row">
+						<span class="column-elastic sync-page-local-title"></span>
+					</div>
+				</div>
+
+				<hr/>
+
+				<div class="row">
+					<span class="column w6em">Remote Tip</span>
+					<button class="column sync-page-fetch-button material-icons">refresh</button>
+					<span class="column-elastic text-right sync-page-remote-commit"></span>
+				</div>
+
+				<div>
+					<div class="row">
+						<span class="column-elastic text-right sync-page-remote-authordate"></span>
+					</div>
+					<div class="row">
+						<span class="column-elastic text-right sync-page-remote-author"></span>
+					</div>
+					<div class="row">
+						<span class="column-elastic sync-page-remote-title"></span>
+					</div>
+				</div>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons sync-page-push-button" disabled>cloud_upload</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons sync-page-pull-button" disabled>cloud_download</button>
 			</div>
 		</div>
 
@@ -288,7 +345,7 @@
 			</div>
 
 			<div class="row footer">
-				<button class="column search-page-settings-button material-icons">settings</button>
+				<button class="column search-page-settings-button material-icons">tune</button>
 				<div class="column-elastic footer-status">backend is not ready</div>
 				<button class="column search-page-add-button material-icons">add</button>
 			</div>
@@ -397,6 +454,7 @@
 		<script src="main.js"></script>
 		<script src="newkey-page.js"></script>
 		<script src="newrepo-page.js"></script>
+		<script src="sync-page.js"></script>
 		<script src="settings-page.js"></script>
 		<script src="search-page.js"></script>
 		<script src="edit-page.js"></script>

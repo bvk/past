@@ -62,6 +62,13 @@ button:not(:disabled):hover {
 		align-items: center;
 }
 
+.vrow {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: center;
+}
+
 .column {
 		margin: 0.2em;
     white-space: nowrap;
@@ -102,6 +109,10 @@ button:not(:disabled):hover {
 		width: 8em;
 }
 
+.w4em {
+		width: 4em;
+}
+
 .w6em {
 		width: 6em;
 }
@@ -110,6 +121,26 @@ button:not(:disabled):hover {
 		width: 8em;
 }
 
-.w4em {
-		width: 4em;
+.w10em {
+		width: 10em;
+}
+
+.w20em {
+		width: 20em;
+}
+
+.w25em {
+		width: 25em;
+}
+
+.w40em {
+		width: 40em;
+}
+
+.hidden {
+		display: none;
+}
+
+.text-right {
+		text-align: right;
 }
