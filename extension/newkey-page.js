@@ -197,7 +197,7 @@ function onNewkeyPageUndoButton(page, undoButton) {
 }
 
 function onNewkeyPageDoneButton(page, doneButton) {
-  setOperationStatus("This operation may take some time. Please wait...");
+  setOperationStatus("Please wait...");
   let stateMap = toggleNewkeyPageButtonsDisabled(page, true);
 
   let username = page.getElementsByClassName("newkey-page-username")[0];

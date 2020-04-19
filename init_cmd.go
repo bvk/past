@@ -225,7 +225,11 @@ func doReinit(cmd *cobra.Command, args []string) (status error) {
 			}
 			skipped = append(skipped, path)
 		}
-		encrypted, err := keyring.Encrypt(decrypted, keys)
+		var fps []string
+		for _, key := range keys {
+			fps = append(fps, key.Fingerprint)
+		}
+		encrypted, err := keyring.Encrypt(decrypted, fps)
 		if err != nil {
 			return xerrors.Errorf("could not rencrypt %q with new keys: %w", path, err)
 		}

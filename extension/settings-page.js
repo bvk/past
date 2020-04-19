@@ -19,10 +19,13 @@ function createSettingsPage(params) {
     onSettingsPageCloseButton(page, closeButton);
   });
 
-  let checkButton = page.getElementsByClassName("settings-page-check-button")[0];
-  checkButton.addEventListener("click", function() {
-    onSettingsPageCheckButton(page, checkButton);
-  });
+  let checkButtons = page.getElementsByClassName("settings-page-check-button");
+  for (let i = 0; i < checkButtons.length; i++) {
+    let checkButton = checkButtons[i];
+    checkButton.addEventListener("click", function() {
+      onSettingsPageCheckButton(page, checkButton);
+    });
+  }
 
   let repoButton = page.getElementsByClassName("settings-page-repo-button")[0];
   repoButton.addEventListener("click", function() {
@@ -81,11 +84,13 @@ function onSettingsPageDisplay(page) {
     let repoButton = page.getElementsByClassName("settings-page-repo-button")[0];
     if (!keysReady || !params.check_status.password_store_keys || params.check_status.password_store_keys.length == 0) {
       repoCheck.textContent = "clear";
+      repoButton.textContent = "create_new_folder";
       repoButton.disabled = !keysReady;
     } else {
       repoReady = true;
       repoCheck.textContent = "done";
-      repoButton.style.display = "none";
+      repoButton.disabled = false;
+      repoButton.textContent = "navigate_next";
     }
 
     let remoteCheck = page.getElementsByClassName("settings-page-remote-check")[0];
@@ -126,10 +131,22 @@ function onSettingsPageCheckButton(page, checkButton) {
 }
 
 function onSettingsPageRepoButton(page, repoButton) {
-  let req = {check_status:{}};
-  callBackend(req, function(req, resp) {
-    let newrepoPage = createNewrepoPage(resp);
+  let params = JSON.parse(page.getAttribute("page-params"));
+  if (!params) {
+    console.log("unexpected: params must exist when repo button is enabled");
+    return
+  }
+
+  if (!params.check_status.password_store_keys || params.check_status.password_store_keys.length == 0) {
+    let newrepoPage = createNewrepoPage(params);
     showPage(newrepoPage, "newrepo-page", onNewrepoPageDisplay);
+    return;
+  }
+
+  let req = {scan_store:{}};
+  callBackend(req, function(req, resp) {
+    let statusPage = createStatusPage(resp);
+    showPage(statusPage, "status-page", onStatusPageDisplay);
   });
 }
 
@@ -146,8 +163,8 @@ function onSettingsPageKeysButton(page, keysButton) {
     return;
   }
 
-  let keysPage = createKeysPage(params);
-  showPage(keysPage, "keys-page", onKeysPageDisplay);
+  let keyringPage = createKeyringPage(params);
+  showPage(keyringPage, "keyring-page", onKeyringPageDisplay);
   return;
 }
 

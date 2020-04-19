@@ -69,6 +69,20 @@ button:not(:disabled):hover {
 		align-items: center;
 }
 
+.vrow-lefty {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: left;
+}
+
+.vrow-righty {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: right;
+}
+
 .column {
 		margin: 0.2em;
     white-space: nowrap;
@@ -149,6 +163,22 @@ button:not(:disabled):hover {
 		width: 40em;
 }
 
+.mw20em {
+		min-width: 20em;
+}
+
+.mw25em {
+		min-width: 25em;
+}
+
+.mw32em {
+		min-width: 32em;
+}
+
+.mw40em {
+		min-width: 40em;
+}
+
 .h25em {
 		height: 25em;
 }
@@ -159,4 +189,12 @@ button:not(:disabled):hover {
 
 .text-right {
 		text-align: right;
+}
+
+.bold {
+		font-weight: bold;
+}
+
+.nowrap {
+    white-space: nowrap;
 }

@@ -80,7 +80,7 @@ function createNewrepoPage(params) {
       let key = params.check_status.local_keys[i];
 
       let item = keyItem.cloneNode(true);
-      item.setAttribute("key-fingerprint", key.fingerprint);
+      item.setAttribute("key-fingerprint", key.key_fingerprint);
       item.setAttribute("key-state", "off");
       item.getElementsByClassName("newrepo-page-key")[0].textContent = key.user_email;
       item.addEventListener("click", function() {
@@ -99,7 +99,7 @@ function createNewrepoPage(params) {
       let key = params.check_status.local_keys[i];
 
       let item = keyItem.cloneNode(true);
-      item.setAttribute("key-fingerprint", key.fingerprint);
+      item.setAttribute("key-fingerprint", key.key_fingerprint);
       item.setAttribute("key-state", "off");
       item.getElementsByClassName("newrepo-page-key")[0].textContent = key.user_email;
       item.addEventListener("click", function() {
@@ -116,7 +116,7 @@ function createNewrepoPage(params) {
 }
 
 function onNewrepoPageDisplay(page) {
-  onNewrepoPageDisplayTab(page, "newrepo-page-create-button")
+  onNewrepoPageDisplayTab(page, "newrepo-page-import-button")
 }
 
 let newrepoPageTabs = {

@@ -19,7 +19,7 @@
 
 			<hr/>
 
-			<div class="content">
+			<div class="content mw32em">
 				<div class="row">
 					<span class="column w6em">User Name</span>
 					<input class="column-elastic newkey-page-username"></input>
@@ -66,90 +66,49 @@
 			</div>
 		</div>
 
-		<!-- keys page -->
+		<!-- keyring page -->
 
-		<div id="keys-page-template" style="display:none">
+		<div id="keyring-page-template" style="display:none">
 			<div class="row header">
-				<button class="column material-icons keys-page-back-button">navigate_before</button>
+				<button class="column material-icons keyring-page-back-button">navigate_before</button>
 				<span class="column-elastic header-title">GPG Keyring</span>
-				<button class="column material-icons keys-page-close-button">clear</button>
+				<button class="column material-icons keyring-page-close-button">clear</button>
 			</div>
 
-			<div class="content">
+			<div class="content mw32em">
 				<div class="row">
-					<span class="column-elastic">Local Keys (with Private Key)</span>
-					<span class="column-righty keys-page-localkey-count"></span>
+					<span class="column-elastic bold nowrap">Local Keys (with Private Key)</span>
 				</div>
 
 				<ul>
-					<li class="keys-page-local-key-template" style="display:none">
+					<li class="keyring-page-local-key-template" style="display:none">
 						<div class="row">
-							<span class="column-elastic keys-page-localkey-fingerprint"></span>
-						</div>
-						<div class="row">
-							<span class="column-lefty keys-page-localkey-username"></span>
-							<span class="column-righty keys-page-localkey-useremail"></span>
+							<span class="column material-icons">360</span>
+							<span class="column-lefty keyring-page-localkey-keyid"></span>
+							<button class="column material-icons keyring-page-localkey-view">navigate_next</button>
 						</div>
 					</li>
 				</ul>
 
 				<div class="row">
-					<span class="column-elastic">Remote Keys (without Private Key)</span>
-					<span class="column-righty keys-page-remotekey-count"></span>
+					<span class="column-elastic bold nowrap">Remote Keys (without Private Key)</span>
 				</div>
 
 				<ul>
-					<li class="keys-page-remote-key-template" style="display:none">
+					<li class="keyring-page-remote-key-template" style="display:none">
 						<div class="row">
-							<span class="column-elastic keys-page-remotekey-fingerprint"></span>
-						</div>
-						<div class="row">
-							<span class="column-lefty keys-page-remotekey-username"></span>
-							<span class="column-righty keys-page-remotekey-useremail"></span>
+							<span class="column material-icons">360</span>
+							<span class="column-lefty keyring-page-remotekey-keyid"></span>
+							<button class="column material-icons keyring-page-remotekey-view">navigate_next</button>
 						</div>
 					</li>
 				</ul>
-
-				<div class="row">
-					<span class="column-elastic">Expired Keys</span>
-					<span class="column-righty keys-page-expiredkey-count"></span>
-				</div>
-
-				<ul>
-					<li class="keys-page-expired-key-template" style="display:none">
-						<div class="row">
-							<span class="column-elastic keys-page-expiredkey-fingerprint"></span>
-						</div>
-						<div class="row">
-							<span class="column-lefty keys-page-expiredkey-username"></span>
-							<span class="column-righty keys-page-expiredkey-useremail"></span>
-						</div>
-					</li>
-				</ul>
-
-				<div class="row">
-					<span class="column-elastic">Untrusted Keys</span>
-					<span class="column-righty keys-page-untrustedkey-count"></span>
-				</div>
-
-				<ul>
-					<li class="keys-page-untrusted-key-template" style="display:none">
-						<div class="row">
-							<span class="column-elastic keys-page-untrustedkey-fingerprint"></span>
-						</div>
-						<div class="row">
-							<span class="column-lefty keys-page-untrustedkey-username"></span>
-							<span class="column-righty keys-page-untrustedkey-useremail"></span>
-						</div>
-					</li>
-				</ul>
-
 			</div>
 
 			<div class="row footer">
-				<button class="column material-icons keys-page-add-button">add</button>
+				<button class="column material-icons keyring-page-add-button">add</button>
 				<div class="column-elastic footer-status"></div>
-				<button class="column material-icons keys-page-add-button">add</button>
+				<button class="column material-icons keyring-page-add-button">add</button>
 			</div>
 		</div>
 
@@ -162,7 +121,7 @@
 				<button class="column material-icons addkey-page-close-button">clear</button>
 			</div>
 
-			<div class="content">
+			<div class="content mw32em">
 				<textarea class="column-elastic addkey-page-keydata w25em h25em"></textarea>
 			</div>
 
@@ -170,6 +129,42 @@
 				<button class="column material-icons addkey-page-undo-button" disabled>undo</button>
 				<div class="column-elastic footer-status"></div>
 				<button class="column material-icons addkey-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
+		<!-- view key page -->
+
+		<div id="viewkey-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons viewkey-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">GPG Key Details</span>
+				<button class="column material-icons viewkey-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content mw32em">
+				<div class="row">
+					<span class="column-lefty viewkey-page-key-fingerprint"></span>
+					<button class="column material-icons viewkey-page-copy-button">content_copy</button>
+				</div>
+
+				<div class="row">
+					<span class="column-lefty viewkey-page-key-username"></span>
+					<span class="column-righty viewkey-page-key-trusted"></span>
+					<button class="column material-icons viewkey-page-trust-toggle">check_circle_outline</button>
+				</div>
+
+				<div class="row">
+					<span class="column-lefty viewkey-page-key-useremail"></span>
+					<span class="column-righty viewkey-page-key-expired"></span>
+				</div>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons viewkey-page-export-button">file_copy</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons viewkey-page-delete-button">delete</button>
 			</div>
 		</div>
 
@@ -182,15 +177,15 @@
 				<button class="column material-icons newrepo-page-close-button">clear</button>
 			</div>
 
-			<div class="content">
+			<div class="content mw32em">
 				<div class="row newrepo-page-tab-bar">
-					<button class="column-elastic newrepo-page-create-button">
-						<span class="button-text material-icons">create_new_folder</span>
-						<span class="button-text">Create</span>
-					</button>
 					<button class="column-elastic newrepo-page-import-button">
 						<span class="button-text material-icons">cloud_download</span>
 						<span class="button-text">Import</span>
+					</button>
+					<button class="column-elastic newrepo-page-create-button">
+						<span class="button-text material-icons">create_new_folder</span>
+						<span class="button-text">Create</span>
 					</button>
 				</div>
 
@@ -273,6 +268,69 @@
 			</div>
 		</div>
 
+		<!-- password store status page -->
+
+		<div id="status-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons status-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Password Store Status</span>
+				<button class="column material-icons status-page-close-button">clear</button>
+			</div>
+
+			<hr/>
+
+			<div class="content mw32em">
+				<div class="row">
+					<span class="column-lefty nowrap bold">Unknown Recipients</span>
+				</div>
+
+				<ul>
+					<li class="status-page-missing-key-template" style="display:none">
+						<div class="row">
+							<span class="column-lefty status-page-missing-key"></span>
+							<span class="column-righty">Can read</span>
+							<span class="column status-page-missing-filecount"></span>
+							<span class="column">files</span>
+						</div>
+					</li>
+				</ul>
+
+				<div class="row">
+					<span class="column-lefty nowrap bold">Recipients in Use</span>
+				</div>
+
+				<ul>
+					<li class="status-page-recipient-template" style="display:none">
+						<div class="row">
+							<span class="column material-icons">360</span>
+							<span class="column-lefty status-page-recipient-keyid"></span>
+							<button class="column material-icons status-page-recipient-remove">delete</button>
+							<button class="column material-icons status-page-recipient-view">navigate_next</button>
+						</div>
+					</li>
+				</ul>
+
+				<div class="row">
+					<span class="column-lefty nowrap bold">Available Recipients</span>
+				</div>
+
+				<ul>
+					<li class="status-page-available-template" style="display:none">
+						<div class="row">
+							<span class="column material-icons">360</span>
+							<span class="column-lefty status-page-available-keyid"></span>
+							<button class="column material-icons status-page-available-add">add</button>
+						</div>
+					</li>
+				</ul>
+
+			</div>
+
+			<div class="row footer">
+				<div class="column-elastic footer-status"></div>
+			</div>
+		</div>
+
 		<!-- new remote page -->
 
 		<div id="newremote-page-template" style="display:none">
@@ -284,7 +342,7 @@
 
 			<hr/>
 
-			<div class="content w25em h25em">
+			<div class="content mw32em">
 				<div class="row">
 					<span class="column w6em">Provider</span>
 					<select class="column-elastic newremote-page-gitserver">
@@ -340,42 +398,40 @@
 
 			<hr/>
 
-			<div class="content w25em">
+			<div class="content mw32em">
 				<div class="row">
-					<span class="column w6em">Local Tip</span>
-					<span class="column-elastic text-right sync-page-local-commit"></span>
+					<span class="column-lefty bold">Local Tip</span>
 				</div>
 
-				<div>
-					<div class="row">
-						<span class="column-elastic text-right sync-page-local-authordate"></span>
-					</div>
-					<div class="row">
-						<span class="column-elastic text-right sync-page-local-author"></span>
-					</div>
-					<div class="row">
-						<span class="column-elastic sync-page-local-title"></span>
-					</div>
+				<div class="row">
+					<span class="column-righty sync-page-local-authordate"></span>
+				</div>
+				<div class="row">
+					<span class="column-righty sync-page-local-author"></span>
+				</div>
+				<div class="row">
+					<span class="column-righty sync-page-local-commit"></span>
+				</div>
+				<div class="row">
+					<span class="column-elastic sync-page-local-title"></span>
 				</div>
 
-				<hr/>
-
 				<div class="row">
-					<span class="column w6em">Remote Tip</span>
+					<span class="column-lefty bold">Remote Tip</span>
 					<button class="column sync-page-fetch-button material-icons">refresh</button>
-					<span class="column-elastic text-right sync-page-remote-commit"></span>
 				</div>
 
-				<div>
-					<div class="row">
-						<span class="column-elastic text-right sync-page-remote-authordate"></span>
-					</div>
-					<div class="row">
-						<span class="column-elastic text-right sync-page-remote-author"></span>
-					</div>
-					<div class="row">
-						<span class="column-elastic sync-page-remote-title"></span>
-					</div>
+				<div class="row">
+					<span class="column-righty text-right sync-page-remote-authordate"></span>
+				</div>
+				<div class="row">
+					<span class="column-righty text-right sync-page-remote-author"></span>
+				</div>
+				<div class="row">
+					<span class="column-righty text-right sync-page-remote-commit"></span>
+				</div>
+				<div class="row">
+					<span class="column-elastic sync-page-remote-title"></span>
 				</div>
 			</div>
 
@@ -397,7 +453,7 @@
 
 			<hr/>
 
-			<div class="content">
+			<div class="content mw32em">
 				<ul>
 					<li>
 						<div class="row">
@@ -440,8 +496,8 @@
 			</div>
 
 			<div class="row footer">
-				<button class="column settings-page-sync-button material-icons" disabled>cloud_upload</button>
-				<div class="column-elastic footer-status">backend is not ready</div>
+				<button class="column settings-page-check-button material-icons">refresh</button>
+				<div class="column-elastic footer-status">Not Ready</div>
 				<button class="column settings-page-check-button material-icons">refresh</button>
 			</div>
 		</div>
@@ -455,7 +511,7 @@
 
 			<hr/>
 
-			<div class="content">
+			<div class="content mw32em">
 				<ul>
 					<li>
 						<div class="row">
@@ -525,7 +581,7 @@
 
 			<hr/>
 
-			<div class="content">
+			<div class="content mw32em">
 				<div class="row">
 					<span class="column w6em">Username</span>
 					<input class="column-elastic view-page-username" readonly></input>
@@ -567,7 +623,7 @@
 
 			<hr/>
 
-			<div class="content">
+			<div class="content mw32em">
 				<div>
 					<div class="row">
 						<div class="column-elastic w6em">Website</div>
@@ -616,11 +672,13 @@
 
 		<script src="main.js"></script>
 		<script src="newkey-page.js"></script>
-		<script src="keys-page.js"></script>
+		<script src="keyring-page.js"></script>
 		<script src="addkey-page.js"></script>
+		<script src="viewkey-page.js"></script>
 		<script src="newrepo-page.js"></script>
 		<script src="newremote-page.js"></script>
 		<script src="sync-page.js"></script>
+		<script src="status-page.js"></script>
 		<script src="settings-page.js"></script>
 		<script src="search-page.js"></script>
 		<script src="edit-page.js"></script>

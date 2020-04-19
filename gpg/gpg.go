@@ -144,12 +144,12 @@ func (g *Keyring) Decrypt(data []byte) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (g *Keyring) Encrypt(data []byte, reps []*PublicKey) ([]byte, error) {
+func (g *Keyring) Encrypt(data []byte, fps []string) ([]byte, error) {
 	opts := []string{
 		"--compress-algo=none",
 	}
-	for _, rep := range reps {
-		opts = append(opts, "--recipient", rep.Fingerprint)
+	for _, fp := range fps {
+		opts = append(opts, "--recipient", fp)
 	}
 	cmd := exec.Command("gpg", "--encrypt")
 	cmd.Args = append(cmd.Args, opts...)
@@ -160,6 +160,47 @@ func (g *Keyring) Encrypt(data []byte, reps []*PublicKey) ([]byte, error) {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return nil, xerrors.Errorf("could not encrypt input data: %w", err)
+	}
+	return stdout.Bytes(), nil
+}
+
+func (g *Keyring) Delete(fingerprint string) error {
+	cmd := exec.Command("gpg", "--delete-keys", "--yes")
+	cmd.Args = append(cmd.Args, g.options()...)
+	cmd.Args = append(cmd.Args, fingerprint)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("error: delete key cmd %v failed with stderr %q", cmd.Args, stderr.String())
+		return xerrors.Errorf("could not delete key %q: %w", fingerprint, err)
+	}
+	log.Printf("key %q is deleted from the keyring", fingerprint)
+	return nil
+}
+
+func (g *Keyring) DeleteSecretKey(fingerprint string) error {
+	cmd := exec.Command("gpg", "--delete-secret-keys", "--yes")
+	cmd.Args = append(cmd.Args, g.options()...)
+	cmd.Args = append(cmd.Args, fingerprint)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("error: delete secret key cmd %v failed with stderr %q", cmd.Args, stderr.String())
+		return xerrors.Errorf("could not delete secret key %q: %w", fingerprint, err)
+	}
+	log.Printf("secret key %q is deleted from the keyring", fingerprint)
+	return nil
+}
+
+func (g *Keyring) Export(fingerprint string) ([]byte, error) {
+	cmd := exec.Command("gpg", "--export", "--armor")
+	cmd.Args = append(cmd.Args, g.options()...)
+	cmd.Args = append(cmd.Args, fingerprint)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("error: export key cmd %v failed with stderr %q", cmd.Args, stderr.String())
+		return nil, xerrors.Errorf("could not export key %q: %w", fingerprint, err)
 	}
 	return stdout.Bytes(), nil
 }
@@ -188,6 +229,7 @@ func (g *Keyring) Import(key []byte) ([]*PublicKey, []*SecretKey, error) {
 		return nil, nil, xerrors.Errorf("could not write key to temporary file: %w", err)
 	}
 	cmd := exec.Command("gpg", "--import", "--armor", file.Name())
+	cmd.Args = append(cmd.Args, g.options()...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -212,6 +254,24 @@ func (g *Keyring) Import(key []byte) ([]*PublicKey, []*SecretKey, error) {
 		}
 	}
 	return newPublicKeys, newSecretKeys, nil
+}
+
+func (g *Keyring) SetTrusted(fingerprint string, trusted bool) error {
+	cmd := exec.Command("gpg", "--command-fd", "0", "--edit-key", fingerprint)
+	cmd.Args = append(cmd.Args, g.options()...)
+	if trusted {
+		cmd.Stdin = strings.NewReader("trust\n5\ny\n")
+	} else {
+		cmd.Stdin = strings.NewReader("trust\n2\n")
+	}
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("error: update key trust cmd %v failed with stderr %q", cmd.Args, stderr.String())
+		return xerrors.Errorf("could not update trust status on key %q: %w", fingerprint, err)
+	}
+	log.Printf("trust status for key %q is updated to %b (stdout %q)", fingerprint, trusted, stdout.String())
+	return nil
 }
 
 type PublicKey struct {
@@ -503,4 +563,26 @@ func (g *Keyring) parseRecords(output string) ([]*internal.Record, error) {
 		records = append(records, internal.NewRecord("", fields))
 	}
 	return records, nil
+}
+
+func GetRecipients(file string) ([]string, error) {
+	cmd := exec.Command("gpg", "--list-only", "-d", file)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("get recipients cmd %v failed with stderr %q", cmd.Args, stderr.String())
+		return nil, xerrors.Errorf("could not determine recipients: %w", err)
+	}
+	trim := func(r rune) bool {
+		return !strings.ContainsRune("0123456789ABCDEFabcdef", r)
+	}
+	// For some reason, GPG writes the ids to stderr.
+	var ids []string
+	fields := strings.Fields(stderr.String())
+	for ii := 1; ii < len(fields); ii++ {
+		if fields[ii-1] == "ID" {
+			ids = append(ids, strings.TrimFunc(fields[ii], trim))
+		}
+	}
+	return ids, nil
 }

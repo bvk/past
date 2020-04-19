@@ -41,7 +41,7 @@ function onSyncPageDisplay(page) {
   let params = JSON.parse(page.getAttribute("page-params"));
 
   let lcommit = page.getElementsByClassName("sync-page-local-commit")[0];
-  lcommit.textContent = params.sync_remote.head.commit.substr(0,8);
+  lcommit.textContent = params.sync_remote.head.commit;
 
   let lauthor = page.getElementsByClassName("sync-page-local-author")[0];
   lauthor.textContent = params.sync_remote.head.author;
@@ -53,7 +53,7 @@ function onSyncPageDisplay(page) {
   ltitle.textContent = params.sync_remote.head.title;
 
   let rcommit = page.getElementsByClassName("sync-page-remote-commit")[0];
-  rcommit.textContent = params.sync_remote.remote.commit.substr(0,8);
+  rcommit.textContent = params.sync_remote.remote.commit;
 
   let rauthor = page.getElementsByClassName("sync-page-remote-author")[0];
   rauthor.textContent = params.sync_remote.remote.author;
