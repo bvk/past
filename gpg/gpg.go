@@ -164,6 +164,56 @@ func (g *Keyring) Encrypt(data []byte, reps []*PublicKey) ([]byte, error) {
 	return stdout.Bytes(), nil
 }
 
+func (g *Keyring) Import(key []byte) ([]*PublicKey, []*SecretKey, error) {
+	oldPkeys := g.PublicKeys()
+	oldPublicKeys := make(map[string]*PublicKey)
+	for _, pkey := range oldPkeys {
+		oldPublicKeys[pkey.Fingerprint] = pkey
+	}
+	oldSkeys := g.SecretKeys()
+	oldSecretKeys := make(map[string]*SecretKey)
+	for _, skey := range oldSkeys {
+		oldSecretKeys[skey.Fingerprint] = skey
+	}
+
+	file, err := ioutil.TempFile("", "import")
+	if err != nil {
+		return nil, nil, xerrors.Errorf("could not create temporary file: %w", err)
+	}
+	defer func() {
+		os.Remove(file.Name())
+		file.Close()
+	}()
+	if _, err := file.Write(key); err != nil {
+		return nil, nil, xerrors.Errorf("could not write key to temporary file: %w", err)
+	}
+	cmd := exec.Command("gpg", "--import", "--armor", file.Name())
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, nil, xerrors.Errorf("could not import new key (stderr: %q): %w", stderr.String(), err)
+	}
+	if err := g.Refresh(); err != nil {
+		return nil, nil, xerrors.Errorf("could not refresh after import (keyring is inconsistent): %w", err)
+	}
+
+	pkeys := g.PublicKeys()
+	var newPublicKeys []*PublicKey
+	for _, pkey := range pkeys {
+		if _, ok := oldPublicKeys[pkey.Fingerprint]; !ok {
+			newPublicKeys = append(newPublicKeys, pkey)
+		}
+	}
+	skeys := g.SecretKeys()
+	var newSecretKeys []*SecretKey
+	for _, skey := range skeys {
+		if _, ok := oldSecretKeys[skey.Fingerprint]; !ok {
+			newSecretKeys = append(newSecretKeys, skey)
+		}
+	}
+	return newPublicKeys, newSecretKeys, nil
+}
+
 type PublicKey struct {
 	KeyID       string `json:"key_id"`
 	Fingerprint string `json:"fingerprint"`

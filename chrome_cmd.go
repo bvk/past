@@ -70,6 +70,7 @@ func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
 type ChromeRequest struct {
 	CheckStatus *CheckStatusRequest `json:"check_status"`
 	CreateKey   *CreateKeyRequest   `json:"create_key"`
+	ImportKey   *ImportKeyRequest   `json:"import_key"`
 	CreateRepo  *CreateRepoRequest  `json:"create_repo"`
 	ImportRepo  *ImportRepoRequest  `json:"import_repo"`
 	AddRemote   *AddRemoteRequest   `json:"add_remote"`
@@ -89,6 +90,7 @@ type ChromeResponse struct {
 
 	CheckStatus *CheckStatusResponse `json:"check_status"`
 	CreateKey   *CreateKeyResponse   `json:"create_key"`
+	ImportKey   *ImportKeyResponse   `json:"import_key"`
 	CreateRepo  *CreateRepoResponse  `json:"create_repo"`
 	ImportRepo  *ImportRepoResponse  `json:"import_repo"`
 	AddRemote   *AddRemoteResponse   `json:"add_remote"`
@@ -108,8 +110,10 @@ type CheckStatusResponse struct {
 	GPGPath string `json:"gpg_path"`
 	GitPath string `json:"git_path"`
 
-	LocalKeys  []*gpg.PublicKey `json:"local_keys"`
-	RemoteKeys []*gpg.PublicKey `json:"remote_keys"`
+	LocalKeys     []*gpg.PublicKey `json:"local_keys"`
+	RemoteKeys    []*gpg.PublicKey `json:"remote_keys"`
+	ExpiredKeys   []*gpg.PublicKey `json:"expired_keys"`
+	UntrustedKeys []*gpg.PublicKey `json:"untrusted_keys"`
 
 	PasswordStoreKeys []*gpg.PublicKey `json:"password_store_keys"`
 
@@ -168,6 +172,15 @@ type CreateKeyRequest struct {
 }
 
 type CreateKeyResponse struct {
+}
+
+type ImportKeyRequest struct {
+	Key string `json:"key"`
+}
+
+type ImportKeyResponse struct {
+	NewPublicKeys []*gpg.PublicKey
+	NewSecretKeys []*gpg.SecretKey
 }
 
 type ListFilesRequest struct {
@@ -251,6 +264,11 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	case req.CreateKey != nil:
 		resp.CreateKey = new(CreateKeyResponse)
 		if err := c.doCreateKey(ctx, req.CreateKey, resp.CreateKey); err != nil {
+			resp.Status = err.Error()
+		}
+	case req.ImportKey != nil:
+		resp.ImportKey = new(ImportKeyResponse)
+		if err := c.doImportKey(ctx, req.ImportKey, resp.ImportKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.CreateRepo != nil:
@@ -340,7 +358,15 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 		}
 		pkeys := c.keyring.PublicKeys()
 		for _, pkey := range pkeys {
-			if !pkey.CanEncrypt || !pkey.Trusted || now.After(pkey.ExpiresAt) {
+			if !pkey.CanEncrypt {
+				continue
+			}
+			if !pkey.Trusted {
+				resp.UntrustedKeys = append(resp.UntrustedKeys, pkey)
+				continue
+			}
+			if !pkey.ExpiresAt.IsZero() && now.After(pkey.ExpiresAt) {
+				resp.ExpiredKeys = append(resp.ExpiredKeys, pkey)
 				continue
 			}
 			if _, ok := skeyMap[pkey.Fingerprint]; ok {
@@ -362,6 +388,20 @@ func (c *ChromeHandler) doCreateKey(ctx context.Context, req *CreateKeyRequest, 
 		return err
 	}
 	c.keyring = ring
+	return nil
+}
+
+func (c *ChromeHandler) doImportKey(ctx context.Context, req *ImportKeyRequest, resp *ImportKeyResponse) error {
+	if c.keyring == nil {
+		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
+	}
+	pkeys, skeys, err := c.keyring.Import([]byte(req.Key))
+	if err != nil {
+		return xerrors.Errorf("could not import new key(s): %w", err)
+	}
+	log.Printf("imported %d new public keys and %d new secret keys", len(pkeys), len(skeys))
+	resp.NewPublicKeys = pkeys
+	resp.NewSecretKeys = skeys
 	return nil
 }
 

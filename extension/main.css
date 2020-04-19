@@ -79,6 +79,18 @@ button:not(:disabled):hover {
 		margin: 0.2em;
 }
 
+.column-righty {
+		flex-grow: 1;
+		margin: 0.2em;
+		text-align: right;
+}
+
+.column-lefty {
+		flex-grow: 1;
+		margin: 0.2em;
+		text-align: left;
+}
+
 .header {
 		margin: 0.2em;
 		padding: 0.2em;

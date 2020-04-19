@@ -66,6 +66,113 @@
 			</div>
 		</div>
 
+		<!-- keys page -->
+
+		<div id="keys-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons keys-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">GPG Keyring</span>
+				<button class="column material-icons keys-page-close-button">clear</button>
+			</div>
+
+			<div class="content">
+				<div class="row">
+					<span class="column-elastic">Local Keys (with Private Key)</span>
+					<span class="column-righty keys-page-localkey-count"></span>
+				</div>
+
+				<ul>
+					<li class="keys-page-local-key-template" style="display:none">
+						<div class="row">
+							<span class="column-elastic keys-page-localkey-fingerprint"></span>
+						</div>
+						<div class="row">
+							<span class="column-lefty keys-page-localkey-username"></span>
+							<span class="column-righty keys-page-localkey-useremail"></span>
+						</div>
+					</li>
+				</ul>
+
+				<div class="row">
+					<span class="column-elastic">Remote Keys (without Private Key)</span>
+					<span class="column-righty keys-page-remotekey-count"></span>
+				</div>
+
+				<ul>
+					<li class="keys-page-remote-key-template" style="display:none">
+						<div class="row">
+							<span class="column-elastic keys-page-remotekey-fingerprint"></span>
+						</div>
+						<div class="row">
+							<span class="column-lefty keys-page-remotekey-username"></span>
+							<span class="column-righty keys-page-remotekey-useremail"></span>
+						</div>
+					</li>
+				</ul>
+
+				<div class="row">
+					<span class="column-elastic">Expired Keys</span>
+					<span class="column-righty keys-page-expiredkey-count"></span>
+				</div>
+
+				<ul>
+					<li class="keys-page-expired-key-template" style="display:none">
+						<div class="row">
+							<span class="column-elastic keys-page-expiredkey-fingerprint"></span>
+						</div>
+						<div class="row">
+							<span class="column-lefty keys-page-expiredkey-username"></span>
+							<span class="column-righty keys-page-expiredkey-useremail"></span>
+						</div>
+					</li>
+				</ul>
+
+				<div class="row">
+					<span class="column-elastic">Untrusted Keys</span>
+					<span class="column-righty keys-page-untrustedkey-count"></span>
+				</div>
+
+				<ul>
+					<li class="keys-page-untrusted-key-template" style="display:none">
+						<div class="row">
+							<span class="column-elastic keys-page-untrustedkey-fingerprint"></span>
+						</div>
+						<div class="row">
+							<span class="column-lefty keys-page-untrustedkey-username"></span>
+							<span class="column-righty keys-page-untrustedkey-useremail"></span>
+						</div>
+					</li>
+				</ul>
+
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons keys-page-add-button">add</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons keys-page-add-button">add</button>
+			</div>
+		</div>
+
+		<!-- add key page -->
+
+		<div id="addkey-page-template" style="display:none">
+			<div class="row header">
+				<button class="column material-icons addkey-page-back-button">navigate_before</button>
+				<span class="column-elastic header-title">Import GPG Armor Key</span>
+				<button class="column material-icons addkey-page-close-button">clear</button>
+			</div>
+
+			<div class="content">
+				<textarea class="column-elastic addkey-page-keydata w25em h25em"></textarea>
+			</div>
+
+			<div class="row footer">
+				<button class="column material-icons addkey-page-undo-button" disabled>undo</button>
+				<div class="column-elastic footer-status"></div>
+				<button class="column material-icons addkey-page-done-button" disabled>done</button>
+			</div>
+		</div>
+
 		<!-- new repo page -->
 
 		<div id="newrepo-page-template" style="display:none">
@@ -509,6 +616,8 @@
 
 		<script src="main.js"></script>
 		<script src="newkey-page.js"></script>
+		<script src="keys-page.js"></script>
+		<script src="addkey-page.js"></script>
 		<script src="newrepo-page.js"></script>
 		<script src="newremote-page.js"></script>
 		<script src="sync-page.js"></script>

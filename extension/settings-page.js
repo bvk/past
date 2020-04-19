@@ -73,7 +73,8 @@ function onSettingsPageDisplay(page) {
     } else {
       keysReady = true;
       keysCheck.textContent = "done";
-      keysButton.style.display = "none";
+      keysButton.disabled = false;
+      keysButton.textContent = "navigate_next";
     }
 
     let repoCheck = page.getElementsByClassName("settings-page-repo-check")[0];
@@ -133,8 +134,21 @@ function onSettingsPageRepoButton(page, repoButton) {
 }
 
 function onSettingsPageKeysButton(page, keysButton) {
-  let newkeyPage = createNewkeyPage();
-  showPage(newkeyPage, "newkey-page", onNewkeyPageDisplay);
+  let params = JSON.parse(page.getAttribute("page-params"));
+  if (!params) {
+    console.log("unexpected: params must exist when keys button is enabled");
+    return
+  }
+
+  if (!params.check_status.local_keys || params.check_status.local_keys.length == 0) {
+    let newkeyPage = createNewkeyPage();
+    showPage(newkeyPage, "newkey-page", onNewkeyPageDisplay);
+    return;
+  }
+
+  let keysPage = createKeysPage(params);
+  showPage(keysPage, "keys-page", onKeysPageDisplay);
+  return;
 }
 
 function onSettingsPageRemoteButton(page, remoteButton) {
