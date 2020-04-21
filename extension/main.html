@@ -8,64 +8,6 @@
 
 		<div id="empty-page">.</div>
 
-		<!-- new key page -->
-
-		<div id="newkey-page-template" style="display:none">
-			<div class="row header">
-				<button class="column material-icons newkey-page-back-button">navigate_before</button>
-				<span class="column-elastic header-title">Create Keyring</span>
-				<button class="column material-icons newkey-page-close-button">clear</button>
-			</div>
-
-			<hr/>
-
-			<div class="content mw32em">
-				<div class="row">
-					<span class="column w6em">User Name</span>
-					<input class="column-elastic newkey-page-username"></input>
-				</div>
-
-				<div class="row">
-					<span class="column w6em">User Email</span>
-					<input class="column-elastic newkey-page-useremail"></input>
-				</div>
-
-				<div class="row">
-					<span class="column w6em">Key Options</span>
-					<select class="column-elastic newkey-page-key-length">
-						<option value="4096">4096 Bits</option>
-						<option value="2048">2048 Bits</option>
-						<option value="1024">1024 Bits</option>
-					</select>
-					<select class="column-elastic newkey-page-key-years">
-						<option value="0">Doesn't Expire</option>
-						<option value="1">1 Year</option>
-						<option value="2">2 Years</option>
-						<option value="3">3 Years</option>
-						<option value="4">4 Years</option>
-						<option value="5">5 Years</option>
-						<option value="10">10 Years</option>
-					</select>
-				</div>
-
-				<div class="row">
-					<span class="column-elastic">Passphrase</span>
-				</div>
-
-				<div class="row">
-					<input class="column-elastic w4em newkey-page-passphrase" type="password"></input>
-					<input class="column-elastic w4em newkey-page-repeat-passphrase" type="password"></input>
-					<button class="column material-icons newkey-page-toggle-button">visibility_off</button>
- 				</div>
-			</div>
-
-			<div class="row footer">
-				<button class="column material-icons newkey-page-undo-button" disabled>undo</button>
-				<div class="column-elastic footer-status"></div>
-				<button class="column material-icons newkey-page-done-button" disabled>done</button>
-			</div>
-		</div>
-
 		<!-- keyring page -->
 
 		<div id="keyring-page-template" style="display:none">
@@ -131,12 +73,68 @@
 		<div id="addkey-page-template" style="display:none">
 			<div class="row header">
 				<button class="column material-icons addkey-page-back-button">navigate_before</button>
-				<span class="column-elastic header-title">Import GPG Armor Key</span>
+				<span class="column-elastic header-title">Add Encryption Keys</span>
 				<button class="column material-icons addkey-page-close-button">clear</button>
 			</div>
 
-			<div class="content">
-				<textarea class="column-elastic addkey-page-keydata w25em h25em"></textarea>
+			<div class="content mw32em">
+				<div class="row addkey-page-tab-bar">
+					<button class="column-elastic addkey-page-create-button">
+						<span class="button-text material-icons">create_new_folder</span>
+						<span class="button-text">Create</span>
+					</button>
+
+					<button class="column-elastic addkey-page-import-button">
+						<span class="button-text material-icons">cloud_download</span>
+						<span class="button-text">Import</span>
+					</button>
+				</div>
+
+				<hr/>
+
+				<div class="addkey-page-create-tab">
+					<div class="row">
+						<span class="column w6em">User Name</span>
+						<input class="column-elastic addkey-page-username"></input>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">User Email</span>
+						<input class="column-elastic addkey-page-useremail"></input>
+					</div>
+
+					<div class="row">
+						<span class="column w6em">Key Options</span>
+						<select class="column-elastic addkey-page-key-length">
+							<option value="4096">4096 Bits</option>
+							<option value="2048">2048 Bits</option>
+							<option value="1024">1024 Bits</option>
+						</select>
+						<select class="column-elastic addkey-page-key-years">
+							<option value="0">Doesn't Expire</option>
+							<option value="1">1 Year</option>
+							<option value="2">2 Years</option>
+							<option value="3">3 Years</option>
+							<option value="4">4 Years</option>
+							<option value="5">5 Years</option>
+							<option value="10">10 Years</option>
+						</select>
+					</div>
+
+					<div class="row">
+						<span class="column-elastic">Passphrase</span>
+					</div>
+
+					<div class="row">
+						<input class="column-elastic w4em addkey-page-passphrase" type="password"></input>
+						<input class="column-elastic w4em addkey-page-repeat-passphrase" type="password"></input>
+						<button class="column material-icons addkey-page-toggle-button">visibility_off</button>
+ 					</div>
+				</div>
+
+				<div class="row addkey-page-import-tab">
+					<textarea class="column-elastic addkey-page-keydata h25em"></textarea>
+				</div>
 			</div>
 
 			<div class="row footer">
@@ -685,7 +683,6 @@
 		</div>
 
 		<script src="main.js"></script>
-		<script src="newkey-page.js"></script>
 		<script src="keyring-page.js"></script>
 		<script src="addkey-page.js"></script>
 		<script src="viewkey-page.js"></script>

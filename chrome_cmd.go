@@ -506,14 +506,9 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 }
 
 func (c *ChromeHandler) doCreateKey(ctx context.Context, req *CreateKeyRequest, resp *CreateKeyResponse) error {
-	if c.keyring != nil {
-		return xerrors.Errorf("gpg keyring already exists: %w", os.ErrInvalid)
-	}
-	ring, err := gpg.Create(req.Name, req.Email, req.Passphrase, req.KeyLength, req.KeyYears)
-	if err != nil {
+	if _, err := gpg.Create(req.Name, req.Email, req.Passphrase, req.KeyLength, req.KeyYears); err != nil {
 		return err
 	}
-	c.keyring = ring
 	return nil
 }
 

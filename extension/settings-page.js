@@ -158,8 +158,8 @@ function onSettingsPageKeysButton(page, keysButton) {
   }
 
   if (!params.check_status.local_keys || params.check_status.local_keys.length == 0) {
-    let newkeyPage = createNewkeyPage();
-    showPage(newkeyPage, "newkey-page", onNewkeyPageDisplay);
+    let addkeyPage = createAddkeyPage();
+    showPage(addkeyPage, "addkey-page", onAddkeyPageDisplay);
     return;
   }
 
