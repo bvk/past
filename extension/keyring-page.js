@@ -111,6 +111,37 @@ function onKeyringPageDisplay(page) {
       template.parentNode.insertBefore(newkey, template.nextSibling);
     }
   }
+
+  if (params.check_status.expired_keys) {
+    let template = page.getElementsByClassName("keyring-page-expired-key-template")[0];
+    // TOOD: Remove all nextSiblings of template; they shall be overwritten.
+    for (let i = 0; i < params.check_status.expired_keys.length; i++) {
+      let key = params.check_status.expired_keys[i];
+
+      let newkey = template.cloneNode(true);
+      let viewButton = newkey.getElementsByClassName("keyring-page-expiredkey-view")[0];
+      viewButton.addEventListener("click", function() {
+        let p = createViewkeyPage(key, params);
+        showPage(p, "viewkey-page", onViewkeyPageDisplay);
+      });
+
+      let keyid = newkey.getElementsByClassName("keyring-page-expiredkey-keyid")[0];
+      keyid.setAttribute("username", key.user_name);
+      keyid.setAttribute("useremail", key.user_email);
+      keyid.setAttribute("fingerprint", key.key_fingerprint);
+
+      keyid.textContent = key.user_name;
+      keyid.setAttribute("keyid_type", "username");
+      keyid.addEventListener("click", function() {
+        let idtype = getKeyringPageNextKeyIDType(keyid.getAttribute("keyid_type"));
+        keyid.textContent = keyid.getAttribute(idtype);
+        keyid.setAttribute("keyid_type", idtype);
+      });
+
+      newkey.style.display = "";
+      template.parentNode.insertBefore(newkey, template.nextSibling);
+    }
+  }
 }
 
 function onKeyringPageBackButton(page, backButton) {

@@ -84,7 +84,6 @@ Passphrase: ` + passphrase + `
 
 func (g *Keyring) options() []string {
 	opts := []string{
-		"--quiet",
 		"--yes",
 		"--batch",
 		"--keyid-format", "long",
@@ -228,8 +227,9 @@ func (g *Keyring) Import(key []byte) ([]*PublicKey, []*SecretKey, error) {
 	if _, err := file.Write(key); err != nil {
 		return nil, nil, xerrors.Errorf("could not write key to temporary file: %w", err)
 	}
-	cmd := exec.Command("gpg", "--import", "--armor", file.Name())
+	cmd := exec.Command("gpg", "--import", "--armor")
 	cmd.Args = append(cmd.Args, g.options()...)
+	cmd.Args = append(cmd.Args, file.Name())
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

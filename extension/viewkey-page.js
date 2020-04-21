@@ -68,6 +68,7 @@ function onViewkeyPageDisplay(page) {
 
   let expired = page.getElementsByClassName("viewkey-page-key-expired")[0];
   if (params.is_expired) {
+    toggleButton.disabled = true;
     expired.textContent = "Expired";
   } else if (params.days_to_expire == 0) {
     expired.textContent = "Never Expires";

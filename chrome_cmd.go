@@ -133,8 +133,9 @@ type CheckStatusResponse struct {
 	GPGPath string `json:"gpg_path"`
 	GitPath string `json:"git_path"`
 
-	LocalKeys  []*store.PublicKeyData `json:"local_keys"`
-	RemoteKeys []*store.PublicKeyData `json:"remote_keys"`
+	LocalKeys   []*store.PublicKeyData `json:"local_keys"`
+	RemoteKeys  []*store.PublicKeyData `json:"remote_keys"`
+	ExpiredKeys []*store.PublicKeyData `json:"expired_keys"`
 
 	PasswordStoreKeys []string `json:"password_store_keys"`
 
@@ -486,10 +487,18 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 			if !pkey.CanEncrypt {
 				continue
 			}
+			var v *store.PublicKeyData
 			if skey, ok := skeyMap[pkey.Fingerprint]; ok {
-				resp.LocalKeys = append(resp.LocalKeys, store.ToPublicKeyData(pkey, skey))
+				v = store.ToPublicKeyData(pkey, skey)
 			} else {
-				resp.RemoteKeys = append(resp.RemoteKeys, store.ToPublicKeyData(pkey, nil))
+				v = store.ToPublicKeyData(pkey, nil)
+			}
+			if v.CanDecrypt {
+				resp.LocalKeys = append(resp.LocalKeys, v)
+			} else if v.IsExpired {
+				resp.ExpiredKeys = append(resp.ExpiredKeys, v)
+			} else {
+				resp.RemoteKeys = append(resp.RemoteKeys, v)
 			}
 		}
 	}
