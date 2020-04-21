@@ -45,8 +45,8 @@ function onAddkeyPageDisplay(page) {
 function onAddkeyPageBackButton(page, backButton) {
   let req = {check_status:{}};
   callBackend(req, function(req, resp) {
-    let keysPage = createKeysPage(resp);
-    showPage(keysPage, "keys-page", onKeysPageDisplay);
+    let keyringPage = createKeyringPage(resp);
+    showPage(keyringPage, "keyring-page", onKeyringPageDisplay);
   });
 }
 
