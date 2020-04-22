@@ -3,7 +3,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -36,9 +35,6 @@ func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Printf("%s: %s", e, debug.Stack())
-			return
-		} else if status != nil {
-			log.Printf("error: chrome operation has failed: %w", err)
 		}
 	}()
 
@@ -268,7 +264,7 @@ type ListFilesResponse struct {
 }
 
 type AddFileRequest struct {
-	File     string      `json:"file"`
+	Filename string      `json:"filename"`
 	Password string      `json:"password"`
 	Username string      `json:"username"`
 	Sitename string      `json:"sitename"`
@@ -279,9 +275,9 @@ type AddFileResponse struct {
 }
 
 type EditFileRequest struct {
-	File     string `json:"file"`
 	OrigFile string `json:"orig_file"`
 
+	Filename string `json:"filename"`
 	Password string `json:"password"`
 	Username string `json:"username"`
 	Sitename string `json:"sitename"`
@@ -292,13 +288,15 @@ type EditFileResponse struct {
 }
 
 type ViewFileRequest struct {
-	File string `json:"file"`
+	Filename string `json:"filename"`
 }
 
 type ViewFileResponse struct {
-	Username      string      `json:"username"`
-	Password      string      `json:"password"`
-	KeyValuePairs [][2]string `json:"key_value_pairs"`
+	Filename string `json:"filename"`
+	Sitename string `json:"sitename"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Data     string `json:"data"`
 }
 
 type DeleteFileRequest struct {
@@ -315,7 +313,13 @@ type ChromeHandler struct {
 	pstore  *store.PasswordStore
 }
 
-func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) error {
+func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) (status error) {
+	defer func() {
+		if status != nil {
+			log.Printf("error: chrome operation has failed: %w", status)
+		}
+	}()
+
 	var sizeBytes [4]byte
 	if _, err := io.ReadFull(os.Stdin, sizeBytes[:]); err != nil {
 		return xerrors.Errorf("could not read input message length: %w", err)
@@ -894,9 +898,6 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 	if c.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to add file: %w", os.ErrInvalid)
 	}
-	if strings.Contains(req.File, "/") {
-		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
-	}
 
 	vs := store.NewValues(nil)
 	for _, other := range req.Rest {
@@ -905,8 +906,12 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 	vs.Set("username", req.Username)
 	vs.Set("sitename", req.Sitename)
 
+	if len(req.Filename) == 0 {
+		req.Filename = filepath.Join("./", req.Sitename, req.Username)
+	}
+
 	data := store.Format(req.Password, vs.Bytes())
-	if err := c.pstore.CreateFile(req.File, data, os.FileMode(0644)); err != nil {
+	if err := c.pstore.CreateFile(req.Filename, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not add new file: %w", err)
 	}
 	return nil
@@ -916,22 +921,25 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 	if c.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to edit file: %w", os.ErrInvalid)
 	}
-	if strings.Contains(req.File, "/") {
-		return xerrors.Errorf("directories are not allowed in the file name: %w", os.ErrInvalid)
-	}
 
 	vs := store.NewValues([]byte(req.Data))
 	vs.Set("username", req.Username)
 	vs.Set("sitename", req.Sitename)
 
+	if len(req.Filename) == 0 {
+		req.Filename = filepath.Join("./", req.Sitename, req.Username)
+		vs.Del("username")
+		vs.Del("sitename")
+	}
+
 	data := store.Format(req.Password, vs.Bytes())
-	if len(req.OrigFile) > 0 && req.OrigFile != req.File {
-		if err := c.pstore.ReplaceFile(req.OrigFile, req.File, data); err != nil {
+	if len(req.OrigFile) > 0 && req.OrigFile != req.Filename {
+		if err := c.pstore.ReplaceFile(req.OrigFile, req.Filename, data); err != nil {
 			return xerrors.Errorf("could not replace file %q: %w", req.OrigFile, err)
 		}
 	} else {
-		if err := c.pstore.UpdateFile(req.File, data); err != nil {
-			return xerrors.Errorf("could not update file %q: %w", req.File, err)
+		if err := c.pstore.UpdateFile(req.Filename, data); err != nil {
+			return xerrors.Errorf("could not update file %q: %w", req.Filename, err)
 		}
 	}
 	return nil
@@ -948,10 +956,6 @@ func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, 
 	}
 
 	for _, file := range files {
-		// We don't want to support directory structure with the extension.
-		if strings.ContainsRune(file, filepath.Separator) {
-			continue
-		}
 		if strings.HasSuffix(file, ".gpg") {
 			resp.Files = append(resp.Files, strings.TrimSuffix(file, ".gpg"))
 		}
@@ -964,26 +968,40 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 		return xerrors.Errorf("password store is unavailable to view file: %w", os.ErrInvalid)
 	}
 
-	file := filepath.Join("./", req.File+".gpg")
+	file := filepath.Join("./", req.Filename+".gpg")
 	encrypted, err := c.repo.ReadFile(file)
 	if err != nil {
-		return xerrors.Errorf("could not get login entry with name %q: %w", req.File, err)
+		return xerrors.Errorf("could not get login entry with name %q: %w", req.Filename, err)
 	}
 	decrypted, err := c.keyring.Decrypt(encrypted)
 	if err != nil {
-		return xerrors.Errorf("could not decrypt login entry %q: %w", req.File, err)
+		return xerrors.Errorf("could not decrypt login entry %q: %w", req.Filename, err)
 	}
-	// Identify the username here, so that UI layer becomes easier.
-	password, kvs := parse(decrypted)
-	for _, kv := range kvs {
-		key := strings.ToLower(kv[0])
-		if len(resp.Username) == 0 && key == "username" || key == "user" || key == "login" {
-			resp.Username = kv[1]
-		} else {
-			resp.KeyValuePairs = append(resp.KeyValuePairs, kv)
-		}
+	password, data := store.Parse(decrypted)
+	values := store.NewValues(data)
+
+	// Sitename and username are chosen from the filepath by default if the file
+	// path is in `site.com/user.gpg` format. However, key-value pairs in the
+	// file data can override the default username and sitename values.
+	sitename := ""
+	dir := filepath.Dir(req.Filename)
+	if dir != "." && strings.ContainsRune(dir, '.') && !strings.ContainsRune(dir, filepath.Separator) {
+		sitename = dir
 	}
+	if s := values.Get("sitename"); len(s) > 0 {
+		sitename = s
+	}
+
+	username := filepath.Base(req.Filename)
+	if us := store.GetUsernames(values); len(us) > 0 {
+		username = us[0]
+	}
+
+	resp.Data = string(data)
+	resp.Sitename = sitename
+	resp.Username = username
 	resp.Password = password
+	resp.Filename = req.Filename
 	return nil
 }
 
@@ -997,22 +1015,4 @@ func (c *ChromeHandler) doDeleteFile(ctx context.Context, req *DeleteFileRequest
 		return xerrors.Errorf("could not remove file %q: %w", file, err)
 	}
 	return nil
-}
-
-func parse(data []byte) (string, [][2]string) {
-	lines := bytes.Split(data, []byte("\n"))
-	values := [][2]string{}
-	if len(lines) == 0 {
-		return "", values
-	}
-	for ii := 1; ii < len(lines); ii++ {
-		s := string(lines[ii])
-		if colon := strings.IndexRune(s, ':'); colon >= 0 {
-			key := strings.TrimSpace(s[:colon])
-			value := strings.TrimSpace(s[colon+1:])
-			values = append(values, [2]string{key, value})
-		}
-	}
-	password := strings.TrimSpace(string(lines[0]))
-	return password, values
 }

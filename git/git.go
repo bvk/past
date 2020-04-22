@@ -99,6 +99,10 @@ func (g *Dir) Stat(path string) (os.FileInfo, error) {
 }
 
 func (g *Dir) Rename(oldpath, newpath string) error {
+	newdir := filepath.Join(g.dir, filepath.Dir(newpath))
+	if err := os.MkdirAll(newdir, os.FileMode(0755)); err != nil {
+		return xerrors.Errorf("could not create parent directory: %w", err)
+	}
 	cmd := exec.Command("git", "-C", g.dir, "mv", oldpath, newpath)
 	if err := cmd.Run(); err != nil {
 		return xerrors.Errorf("could not rename file %q to %q: %w", oldpath, newpath, err)
@@ -144,6 +148,9 @@ func (g *Dir) RemoveFile(path string) error {
 
 func (g *Dir) WriteFile(path string, data []byte, mode os.FileMode) (status error) {
 	file := filepath.Join(g.dir, path)
+	if err := os.MkdirAll(filepath.Dir(file), os.FileMode(0755)); err != nil {
+		return xerrors.Errorf("could not create parent directory: %w", err)
+	}
 	if err := ioutil.WriteFile(file, data, mode); err != nil {
 		return xerrors.Errorf("could not write to file %q: %w", path, err)
 	}

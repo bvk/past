@@ -196,21 +196,17 @@ function onEditPageDoneButton(page, doneButton) {
     return;
   }
 
-  // FIXME: We must handle multiple user accounts per site.
-
   let pageParams = page.getAttribute("page-params");
   let origFile = "";
   if (pageParams != "{}") {
-    origFile = JSON.parse(pageParams).sitename;
+    origFile = JSON.parse(pageParams).filename;
   }
 
   let req = {};
   if (origFile != "") {
     req = {
       edit_file: {
-        file: sitename.value,
         orig_file: origFile,
-
         sitename: sitename.value,
         username: username.value,
         password: password,
@@ -220,7 +216,6 @@ function onEditPageDoneButton(page, doneButton) {
   } else {
     req = {
       add_file: {
-        file: sitename.value,
         sitename: sitename.value,
         username: username.value,
         password: password,
@@ -228,8 +223,6 @@ function onEditPageDoneButton(page, doneButton) {
       },
     };
   };
-
-  // TODO: Also add moredata to the rest.
 
   // Issue add-password request through the background page.
   callBackend(req, function(req, resp) {

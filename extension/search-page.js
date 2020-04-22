@@ -76,7 +76,7 @@ function onSearchPageCopyButton(page, copyButton) {
     return;
   }
 
-  let req = {view_file:{file:name}};
+  let req = {view_file:{filename:name}};
   callBackend(req, function(req, resp) {
     onSearchPageViewFileResponseForCopy(page, req, resp);
   });
@@ -88,7 +88,7 @@ function onSearchPageViewButton(page, viewButton) {
     return;
   }
 
-  let req = {view_file:{file:name}};
+  let req = {view_file:{filename:name}};
   callBackend(req, function(req, resp) {
     onSearchPageViewFileResponseForViewPage(page, req, resp);
   });

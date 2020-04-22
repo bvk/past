@@ -179,6 +179,10 @@ button:not(:disabled):hover {
 		min-width: 40em;
 }
 
+.h4em {
+		height: 4em;
+}
+
 .h25em {
 		height: 25em;
 }

@@ -3,29 +3,20 @@
 function createViewPage(req, resp) {
   let viewPageTemplate = document.getElementById("view-page-template");
   let page = viewPageTemplate.cloneNode(true);
-  page.setAttribute("page-params", "{}");
+  page.setAttribute("page-params", JSON.stringify(resp));
 
   // Set the page title.
-  let title = page.getElementsByClassName("view-page-filename")[0]
-  title.textContent = req.view_file.file;
+  let title = page.getElementsByClassName("view-page-filename")[0];
+  title.textContent = req.view_file.filename;
 
-  let password = page.getElementsByClassName("view-page-password")[0]
+  let password = page.getElementsByClassName("view-page-password")[0];
   password.value = resp.view_file.password;
 
-  let username = page.getElementsByClassName("view-page-username")[0]
+  let username = page.getElementsByClassName("view-page-username")[0];
   username.value = resp.view_file.username;
 
-  // Dynamically added key-value rows, one for each key-value in the response.
-  if (resp.view_file.key_value_pairs) {
-    for (let i = 0; i < resp.view_file.key_value_pairs.length; i++) {
-      let key = resp.view_file.key_value_pairs[i][0];
-      let value = resp.view_file.key_value_pairs[i][1];
-      appendViewPageKeyValueRow(page, key, value);
-    }
-    // Hide the empty key-value row cause one or more kv entries are present.
-    let kv = page.getElementsByClassName("view-page-key-value")[0]
-    kv.style.display = "none";
-  }
+  let userdata = page.getElementsByClassName("view-page-userdata")[0];
+  userdata.value = resp.view_file.data;
 
   let backButton = page.getElementsByClassName("view-page-back-button")[0];
   backButton.addEventListener("click", function() {
@@ -149,39 +140,16 @@ function onViewPageDeleteFileResponse(page, req, resp) {
 }
 
 function onViewPageEditButton(page, editButton) {
-  // Collect all the key-value pairs as lines.
-  let lines = []
-  let kvs = page.getElementsByClassName("view-page-key-value");
-  for (let i = 0; i < kvs.length; i++) {
-    let row = kvs[i];
-    let key = row.getElementsByClassName("view-page-key")[0].value;
-    let value = row.getElementsByClassName("view-page-value")[0].value;
-    if (key || value) {
-      lines.push(key+":"+value);
-    }
-  }
+  let params = JSON.parse(page.getAttribute("page-params"));
 
   let entry = {
-    username: page.getElementsByClassName("view-page-username")[0].value,
-    password: page.getElementsByClassName("view-page-password")[0].value,
-    sitename: page.getElementsByClassName("view-page-filename")[0].textContent,
-    data: (lines.length > 0 ? lines.join("\n")+"\n" : ""),
+    username: params.view_file.username,
+    password: params.view_file.password,
+    sitename: params.view_file.sitename,
+    filename: params.view_file.filename,
+    data: params.view_file.data,
   };
 
   let editPage = createEditPage(entry);
   showPage(editPage, "edit-page", onEditPageDisplay);
-}
-
-function appendViewPageKeyValueRow(page, key, value) {
-  let kvs = page.getElementsByClassName("view-page-key-value");
-  let kv = kvs[kvs.length-1];
-  let row = kv.cloneNode(true);
-  row.getElementsByClassName("view-page-key")[0].value = key;
-  row.getElementsByClassName("view-page-value")[0].value = value;
-  if (value) {
-    let copy = row.getElementsByClassName("view-page-value-copy")[0];
-    copy.disabled = false;
-  }
-  kv.parentNode.insertBefore(row, kv.nextSibling);
-  return row;
 }
