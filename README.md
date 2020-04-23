@@ -2,22 +2,26 @@ OVERVIEW
 --------
 
 This package reimplements the password-store management command `pass` under a
-new name `past`. Additionally, it comes with in-built support for a browser
-extension for Google Chrome or Chromium. As of now, only Mac OS X and GNU/Linux
-are supported.
+new name `past`. Additionally, it comes with in-built support for an browser
+extension for Google Chrome and Chromium. As of now, only Mac OS X and
+GNU/Linux are supported.
 
-You should already be a password-store user to use this package; otherwise,
-functionality provided in this package may not be useful to you. See
-[passwordstore.org](https://passwordstore.org) to learn about password-store.
+You should already be familiar with password-store package; otherwise, this
+package may not be useful to you. See
+[passwordstore.org](https://passwordstore.org) to learn about password-stores.
 
 DEPENDENCIES
 ------------
 
-Past requires `git` and `gpg` tools for normal operations. You need to have
-`go` version `1.12` or above for installation.
+Past requires `git` and `gpg` tools (GPGTools on Mac OS X) for normal
+operations. Please make sure that `git` and `gpg` tools are available in the
+`PATH` directories `$HOME/bin:/usr/local/bin:/usr/bin:/bin`.
 
-Please make sure that `git` and `gpg` tools are available in one of the default
-`PATH` directories (`/bin:/usr/bin:/usr/local/bin`).
+You also need to have `go` version `1.12` or above for installation.
+
+Browser extension does not use any external javascript libraries so that
+security footprint is minimized. However, it uses external Google's Material
+Icons library for buttons.
 
 INSTALLATION
 ------------
@@ -30,8 +34,8 @@ $ ~/go/bin/past install
 ```
 
 First command compiles and installs the `past` command-line tool, and second
-command configures the backend necessary for browser extension and opens the
-chrome web store URL where users can install the extension.
+command configures the browser extension backend and opens the chrome web store
+URL where users can install the extension.
 
 USAGE
 -----
@@ -53,10 +57,25 @@ subcommands are supported.
   show        Decrypts a password-file and prints it's content.
 ```
 
-Browser extension is designed to be as minimal as possible. As of now, users
-cannot create or configure a password-store, but can add new entries and can
-copy passwords to the clipboard. Passwords copied into the clipboard are
-cleared after 10 seconds automatically.
+Browser extension enables most of the password-store operations and a few GPG
+keyring operations. Following is the list of operations browser extension can
+perform:
+
+1. Initialize the GPG keyring, including create, delete, import and export
+encryption keys.
+
+2. Create a new password-store or import an exiting password-store from remote
+git repositories.
+
+3. Search, view, add, remove and edit password-store entries.
+
+4. Add or remote GPG keys to password-stores
+
+5. Sync local password-store changes to the remote or sync changes from the
+remote password-store.
+
+Also, note that passwords copied into the clipboard are cleared after 10
+seconds automatically.
 
 SCREENSHOTS
 -----------

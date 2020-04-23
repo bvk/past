@@ -43,7 +43,7 @@ func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
 	// is installed into /usr/local/bin directory, but it is not part of the PATH
 	// when chrome extension invokes this program.
 	homeBin := filepath.Join(os.Getenv("HOME"), "bin")
-	os.Setenv("PATH", homeBin+":/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin")
+	os.Setenv("PATH", homeBin+":/usr/local/bin:/usr/bin:/bin")
 
 	dataDir, err := flags.GetString("data-dir")
 	if err != nil {
