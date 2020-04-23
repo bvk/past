@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bvk/past/store"
@@ -77,21 +78,28 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 	}
 
 	headers := records[0]
-	nameOffset := -1
+	sitenameOffset := -1
+	usernameOffset := -1
 	passwordOffset := -1
 	for i, header := range headers {
 		if strings.EqualFold(header, "password") {
 			passwordOffset = i
 		}
 		if strings.EqualFold(header, "name") {
-			nameOffset = i
+			sitenameOffset = i
+		}
+		if strings.EqualFold(header, "username") {
+			usernameOffset = i
 		}
 	}
 	if passwordOffset == -1 {
 		return xerrors.Errorf("chrome passwords file has no password column: %w", os.ErrInvalid)
 	}
-	if nameOffset == -1 {
+	if sitenameOffset == -1 {
 		return xerrors.Errorf("chrome passwords file has no name column: %w", os.ErrInvalid)
+	}
+	if usernameOffset == -1 {
+		return xerrors.Errorf("chrome passwords file has no username column: %w", os.ErrInvalid)
 	}
 
 	for i := 1; i < len(records); i++ {
@@ -102,27 +110,31 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 		}
 
 		vs := store.NewValues(nil)
-		name, password := fields[nameOffset], fields[passwordOffset]
+		sitename := fields[sitenameOffset]
+		username := fields[usernameOffset]
+		password := fields[passwordOffset]
 		for i, header := range headers {
-			if i != nameOffset && i != passwordOffset {
+			if i != sitenameOffset && i != passwordOffset && i != usernameOffset {
 				vs.Set(header, fields[i])
 			}
 		}
 
 		data := store.Format(password, vs.Bytes())
-		if err := ps.CreateFile(name, data, os.FileMode(0644)); err != nil {
+		filename := filepath.Join(sitename, username)
+
+		if err := ps.CreateFile(filename, data, os.FileMode(0644)); err != nil {
 			if overwrite && xerrors.Is(err, os.ErrExist) {
-				err = ps.UpdateFile(name, data)
+				err = ps.UpdateFile(filename, data)
 			}
 			if err != nil && !ignoreFailures {
-				return xerrors.Errorf("could not add entry %s: %w", name, err)
+				return xerrors.Errorf("could not add entry %s: %w", filename, err)
 			}
 			if err != nil {
-				log.Printf("could not create or update password-file %q: %v", name, err)
+				log.Printf("could not create or update password-file %q: %v", filename, err)
 				continue
 			}
 		}
-		log.Printf("added new password-file %q", name)
+		log.Printf("added new password-file %q", filename)
 	}
 	return nil
 }

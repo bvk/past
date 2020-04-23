@@ -90,7 +90,15 @@ func (g *Dir) ListFiles() ([]string, error) {
 	if err := cmd.Run(); err != nil {
 		return nil, xerrors.Errorf("could not list git files: %w", err)
 	}
-	return strings.Fields(string(stdout.Bytes())), nil
+	lines := strings.Split(string(stdout.Bytes()), "\n")
+	var files []string
+	for _, line := range lines {
+		line := strings.TrimSpace(line)
+		if len(line) > 0 {
+			files = append(files, line)
+		}
+	}
+	return files, nil
 }
 
 func (g *Dir) Stat(path string) (os.FileInfo, error) {
@@ -115,8 +123,11 @@ func (g *Dir) CreateFile(path string, data []byte, mode os.FileMode) (status err
 	if _, err := os.Stat(file); err == nil {
 		return xerrors.Errorf("target path %q already exists: %w", path, os.ErrExist)
 	}
+	if err := os.MkdirAll(filepath.Dir(file), os.FileMode(0755)); err != nil {
+		return xerrors.Errorf("could not create parent directory: %w", err)
+	}
 	if err := ioutil.WriteFile(file, data, mode); err != nil {
-		return xerrors.Errorf("could not create file %q: %w", err)
+		return xerrors.Errorf("could not create file %q: %w", file, err)
 	}
 	defer func() {
 		if status != nil {
