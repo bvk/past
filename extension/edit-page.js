@@ -250,13 +250,13 @@ function onEditPageCopyButton(page, copyButton) {
   }
 
   let whenCleared = function() {
-    setOperationStatus("Password is cleared from the clipboard.");
+    setOperationStatus("Cleared.");
   };
 
   if (backgroundPage.copyString(password, 10, whenCleared)) {
-    setOperationStatus("Password is copied to the clipboard.");
+    setOperationStatus("Copied.");
   } else {
-    setOperationStatus("Cloud not copy the password to clipboard.");
+    setOperationStatus("Cloud not copy.");
   }
 }
 

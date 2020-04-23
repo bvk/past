@@ -115,17 +115,22 @@ function showPage(page, id, callback) {
   callback(page);
 }
 
+function checkResponse(resp) {
+  if (!resp) {
+    setOperationStatus("Could not perform backend operation.");
+    return false;
+  }
+  if (resp.status != "") {
+    setOperationStatus("Backend operation has failed ("+resp.status+").");
+    return false;
+  }
+  return true;
+}
+
 function callBackend(req, callback) {
   backgroundPage.callBackend(req, function(resp) {
-    if (!resp) {
-      console.log("request", req, "response", resp);
-      setOperationStatus("Could not perform backend operation.");
-      return;
-    }
-    if (resp.status != "") {
-      console.log("request", req, "response", resp);
-      setOperationStatus("Backend operation has failed ("+resp.status+").");
-      return;
+    if (!checkResponse(resp)) {
+      return
     }
     callback(req, resp);
   });

@@ -56,7 +56,6 @@ function onSearchPageListFilesResponse(page, req, resp) {
   }
   updatePersistentState(passwordFiles);
 
-  setOperationStatus("Backend is ready.");
   setSearchPageRecentListItems(page, orderSearchPagePasswordFiles(""));
 
   var searchBars = page.getElementsByClassName("search-page-search-bar");
@@ -77,7 +76,10 @@ function onSearchPageCopyButton(page, copyButton) {
   }
 
   let req = {view_file:{filename:name}};
-  callBackend(req, function(req, resp) {
+  backgroundPage.callBackend(req, function(resp) {
+    if (!checkResponse(resp)) {
+      return;
+    }
     onSearchPageViewFileResponseForCopy(page, req, resp);
   });
 }
@@ -110,18 +112,16 @@ function onSearchPageAddButton(page, addButton) {
 
 function onSearchPageViewFileResponseForCopy(page, req, resp) {
   let whenCleared = function() {
-    setOperationStatus("Password is cleared from the clipboard.");
+    setOperationStatus("Cleared.");
   };
 
   if (backgroundPage.copyString(resp.view_file.password, 10, whenCleared)) {
-    setOperationStatus("Password is copied to the clipboard.");
+    setOperationStatus("Copied.");
   } else {
-    setOperationStatus("Cloud not copy the password to clipboard.");
+    setOperationStatus("Cloud not copy.");
   }
 
   persistentState.fileCountMap[req.view_file.file] += 1;
-
-  console.log("saving state", persistentState);
   backgroundPage.setLocalStorage({"persistentState": persistentState});
 }
 

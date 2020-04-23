@@ -94,32 +94,32 @@ function onViewPageToggleButton(page, toggleButton) {
 
 function onViewPagePassCopyButton(page, copyButton) {
   let whenCleared = function() {
-    setOperationStatus("Password is cleared from the clipboard.");
+    setOperationStatus("Cleared.");
   };
 
   let password = page.getElementsByClassName("view-page-password")[0]
   if (backgroundPage.copyString(password.value, 10, whenCleared)) {
-    setOperationStatus("Password is copied to the clipboard.");
+    setOperationStatus("Copied.");
   } else {
-    setOperationStatus("Cloud not copy the password to clipboard.");
+    setOperationStatus("Cloud not copy.");
   }
 }
 
 function onViewPageUserCopyButton(page, copyButton) {
   let username = page.getElementsByClassName("view-page-username")[0]
   if (backgroundPage.copyString(username.value)) {
-    setOperationStatus("Username is copied to the clipboard.");
+    setOperationStatus("Copied.");
   } else {
-    setOperationStatus("Cloud not copy the username to clipboard.");
+    setOperationStatus("Cloud not copy.");
   }
 }
 
 function onViewPageValueCopyButton(page, copyButton) {
   let value = copyButton.previousElementSibling;
   if (backgroundPage.copyString(value.value)) {
-    setOperationStatus("Value is copied to the clipboard.");
+    setOperationStatus("Copied.");
   } else {
-    setOperationStatus("Cloud not copy the value to clipboard.");
+    setOperationStatus("Cloud not copy.");
   }
 }
 
@@ -133,7 +133,7 @@ function onViewPageDeleteButton(page, deleteButton) {
 }
 
 function onViewPageDeleteFileResponse(page, req, resp) {
-  setOperationStatus("File %q is removed successfully.");
+  setOperationStatus("Removed.");
 
   let searchPage = createSearchPage();
   showPage(searchPage, "search-page", onSearchPageDisplay);

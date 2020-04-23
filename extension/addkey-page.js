@@ -283,12 +283,7 @@ function onAddkeyPageCreateTabDoneButton(page, doneButton) {
 }
 
 function onAddkeyPageCreateKeyResponse(page, req, resp) {
-  if (!resp) {
-    setOperationStatus("Could not perform backend operation.");
-    return;
-  }
-  if (resp.status != "") {
-    setOperationStatus("Backend operation has failed ("+resp.status+").");
+  if (!checkResponse(resp)) {
     return;
   }
   let checkReq = {check_status:{}};

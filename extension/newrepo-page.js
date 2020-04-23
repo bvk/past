@@ -380,7 +380,7 @@ function onNewrepoPageCreateTabDoneButton(page, doneButton) {
     }
   }
   if (fingerprints.length == 0) {
-    setOperationStatus("No keys are selected for the password store.");
+    setOperationStatus("No Keys Selected.");
     return;
   }
   let req = {create_repo:{fingerprints:fingerprints}};

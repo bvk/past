@@ -108,7 +108,7 @@ function onSettingsPageDisplay(page) {
   }
 
   if (messagingReady && toolsReady && keysReady && repoReady) {
-    setOperationStatus("Backend is now ready.");
+    setOperationStatus("Ready.");
   }
   autoSettingsPageBackButton(page);
 }

@@ -24,7 +24,7 @@ function createViewkeyPage(params, backParams) {
   let copyButton = page.getElementsByClassName("viewkey-page-copy-button")[0];
   copyButton.addEventListener("click", function() {
     backgroundPage.copyString(params.key_fingerprint);
-    setOperationStatus("Copied");
+    setOperationStatus("Copied.");
   });
 
   let toggleButton = page.getElementsByClassName("viewkey-page-trust-toggle")[0];
@@ -104,7 +104,7 @@ function onViewkeyPageExportButton(page, exportButton) {
   let req = {export_key:{fingerprint: params.key_fingerprint}};
   callBackend(req, function(req, resp) {
     backgroundPage.copyString(resp.export_key.armor_key);
-    setOperationStatus("Exported to Clipboard");
+    setOperationStatus("Copied.");
   });
 }
 

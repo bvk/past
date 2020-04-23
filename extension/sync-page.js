@@ -87,7 +87,7 @@ function onSyncPageDisplay(page) {
   pullButton.disabled = false;
   pushButton.textContent = "publish";
   pullButton.textContent = "get_app";
-  setOperationStatus("Diverged. Syncing will overwrite the target.");
+  setOperationStatus("Diverged. Syncing will overwrite.");
 }
 
 function onSyncPageBackButton(page, backButton) {
