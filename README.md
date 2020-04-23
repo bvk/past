@@ -80,5 +80,13 @@ seconds automatically.
 SCREENSHOTS
 -----------
 
-![Search Passwords Page](extras/search-passwords.png?raw=true)
-![Add  Password Page](extras/add-password.png?raw=true)
+![1](extras/check-status.png?raw=true)
+![2](extras/add-key.png?raw=true)
+![3](extras/keyring.png?raw=true)
+![4](extras/key-detail.png?raw=true)
+![5](extras/import-repo.png?raw=true)
+![6](extras/create-repo.png?raw=true)
+![7](extras/sync-repo.png?raw=true)
+![8](extras/search.png?raw=true)
+![9](extras/edit.png?raw=true)
+![10](extras/new.png?raw=true)
