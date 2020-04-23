@@ -1,6 +1,6 @@
 // Copyright (c) 2020 BVK Chaitanya
 
-package main
+package msg
 
 import (
 	"context"
@@ -13,60 +13,30 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 
 	"github.com/bvk/past"
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
 
-	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 )
 
-func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
-	// Redirect the logs to a file.
-	file := filepath.Join(os.TempDir(), fmt.Sprintf("past-%s.log", os.Getenv("USER")))
-	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.FileMode(0600))
-	if err != nil {
-		return xerrors.Errorf("could not open log file %q: %w", file, err)
-	}
-	log.SetOutput(logfile)
-	defer func() {
-		if e := recover(); e != nil {
-			log.Printf("%s: %s", e, debug.Stack())
-		}
-	}()
-
-	// When invoked by chrome, PATH may not be the same, so fix it to a known
-	// good defaults. For example, gpg command from GPGTools package in Mac OS X
-	// is installed into /usr/local/bin directory, but it is not part of the PATH
-	// when chrome extension invokes this program.
-	homeBin := filepath.Join(os.Getenv("HOME"), "bin")
-	os.Setenv("PATH", homeBin+":/usr/local/bin:/usr/bin:/bin")
-
-	dataDir, err := flags.GetString("data-dir")
-	if err != nil {
-		return xerrors.Errorf("could not get --data-dir value: %w", err)
-	}
-	if len(dataDir) == 0 {
-		return xerrors.Errorf("data directory path be empty: %w", os.ErrInvalid)
-	}
-
+func New(dataDir string) (_ *Handler, status error) {
 	repo, _ := git.NewDir(dataDir)
-	keyring, _ := gpg.NewKeyring("")
-	pstore, _ := past.New(repo, keyring)
+	ring, _ := gpg.NewKeyring("")
+	pstore, _ := past.New(repo, ring)
 
-	h := ChromeHandler{
-		dir:     dataDir,
-		repo:    repo,
-		keyring: keyring,
-		pstore:  pstore,
+	h := &Handler{
+		dir:    dataDir,
+		repo:   repo,
+		ring:   ring,
+		pstore: pstore,
 	}
-	return h.ServeChrome(context.Background(), os.Stdin, os.Stdout)
+	return h, nil
 }
 
-type ChromeRequest struct {
+type BrowserRequest struct {
 	CheckStatus *CheckStatusRequest `json:"check_status"`
 
 	CreateKey *CreateKeyRequest `json:"create_key"`
@@ -92,7 +62,7 @@ type ChromeRequest struct {
 	DeleteFile *DeleteFileRequest `json:"delete_file"`
 }
 
-type ChromeResponse struct {
+type BrowserResponse struct {
 	// Status contains any error in performing the operation. It should be empty
 	// on success.
 	Status string `json:"status"`
@@ -306,17 +276,17 @@ type DeleteFileRequest struct {
 type DeleteFileResponse struct {
 }
 
-type ChromeHandler struct {
-	dir     string
-	repo    *git.Dir
-	keyring *gpg.Keyring
-	pstore  *past.PasswordStore
+type Handler struct {
+	dir    string
+	repo   *git.Dir
+	ring   *gpg.Keyring
+	pstore *past.PasswordStore
 }
 
-func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) (status error) {
+func (h *Handler) Serve(ctx context.Context, in io.Reader, out io.Writer) (status error) {
 	defer func() {
 		if status != nil {
-			log.Printf("error: chrome operation has failed: %w", status)
+			log.Printf("error: browser operation has failed: %w", status)
 		}
 	}()
 
@@ -330,12 +300,12 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 		return xerrors.Errorf("could not read input message: %w", err)
 	}
 
-	req := new(ChromeRequest)
+	req := new(BrowserRequest)
 	if err := json.Unmarshal(reqBuf, req); err != nil {
 		return xerrors.Errorf("could not unmarshal input message: %w", err)
 	}
 
-	var resp ChromeResponse
+	var resp BrowserResponse
 	defer func() {
 		if len(resp.Status) > 0 {
 			log.Printf("error: operation has failed with response status: %s", resp.Status)
@@ -345,92 +315,92 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	switch {
 	case req.CheckStatus != nil:
 		resp.CheckStatus = new(CheckStatusResponse)
-		if err := c.doCheckStatus(ctx, req.CheckStatus, resp.CheckStatus); err != nil {
+		if err := h.doCheckStatus(ctx, req.CheckStatus, resp.CheckStatus); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.CreateKey != nil:
 		resp.CreateKey = new(CreateKeyResponse)
-		if err := c.doCreateKey(ctx, req.CreateKey, resp.CreateKey); err != nil {
+		if err := h.doCreateKey(ctx, req.CreateKey, resp.CreateKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ImportKey != nil:
 		resp.ImportKey = new(ImportKeyResponse)
-		if err := c.doImportKey(ctx, req.ImportKey, resp.ImportKey); err != nil {
+		if err := h.doImportKey(ctx, req.ImportKey, resp.ImportKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.EditKey != nil:
 		resp.EditKey = new(EditKeyResponse)
-		if err := c.doEditKey(ctx, req.EditKey, resp.EditKey); err != nil {
+		if err := h.doEditKey(ctx, req.EditKey, resp.EditKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ExportKey != nil:
 		resp.ExportKey = new(ExportKeyResponse)
-		if err := c.doExportKey(ctx, req.ExportKey, resp.ExportKey); err != nil {
+		if err := h.doExportKey(ctx, req.ExportKey, resp.ExportKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.DeleteKey != nil:
 		resp.DeleteKey = new(DeleteKeyResponse)
-		if err := c.doDeleteKey(ctx, req.DeleteKey, resp.DeleteKey); err != nil {
+		if err := h.doDeleteKey(ctx, req.DeleteKey, resp.DeleteKey); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.CreateRepo != nil:
 		resp.CreateRepo = new(CreateRepoResponse)
-		if err := c.doCreateRepo(ctx, req.CreateRepo, resp.CreateRepo); err != nil {
+		if err := h.doCreateRepo(ctx, req.CreateRepo, resp.CreateRepo); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ImportRepo != nil:
 		resp.ImportRepo = new(ImportRepoResponse)
-		if err := c.doImportRepo(ctx, req.ImportRepo, resp.ImportRepo); err != nil {
+		if err := h.doImportRepo(ctx, req.ImportRepo, resp.ImportRepo); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.AddRemote != nil:
 		resp.AddRemote = new(AddRemoteResponse)
-		if err := c.doAddRemote(ctx, req.AddRemote, resp.AddRemote); err != nil {
+		if err := h.doAddRemote(ctx, req.AddRemote, resp.AddRemote); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.SyncRemote != nil:
 		resp.SyncRemote = new(SyncRemoteResponse)
-		if err := c.doSyncRemote(ctx, req.SyncRemote, resp.SyncRemote); err != nil {
+		if err := h.doSyncRemote(ctx, req.SyncRemote, resp.SyncRemote); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ScanStore != nil:
 		resp.ScanStore = new(ScanStoreResponse)
-		if err := c.doScanStore(ctx, req.ScanStore, resp.ScanStore); err != nil {
+		if err := h.doScanStore(ctx, req.ScanStore, resp.ScanStore); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.AddRecipient != nil:
 		resp.AddRecipient = new(AddRecipientResponse)
-		if err := c.doAddRecipient(ctx, req.AddRecipient, resp.AddRecipient); err != nil {
+		if err := h.doAddRecipient(ctx, req.AddRecipient, resp.AddRecipient); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.RemoveRecipient != nil:
 		resp.RemoveRecipient = new(RemoveRecipientResponse)
-		if err := c.doRemoveRecipient(ctx, req.RemoveRecipient, resp.RemoveRecipient); err != nil {
+		if err := h.doRemoveRecipient(ctx, req.RemoveRecipient, resp.RemoveRecipient); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.AddFile != nil:
 		resp.AddFile = new(AddFileResponse)
-		if err := c.doAddFile(ctx, req.AddFile, resp.AddFile); err != nil {
+		if err := h.doAddFile(ctx, req.AddFile, resp.AddFile); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.EditFile != nil:
 		resp.EditFile = new(EditFileResponse)
-		if err := c.doEditFile(ctx, req.EditFile, resp.EditFile); err != nil {
+		if err := h.doEditFile(ctx, req.EditFile, resp.EditFile); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ListFiles != nil:
 		resp.ListFiles = new(ListFilesResponse)
-		if err := c.doListFiles(ctx, req.ListFiles, resp.ListFiles); err != nil {
+		if err := h.doListFiles(ctx, req.ListFiles, resp.ListFiles); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.ViewFile != nil:
 		resp.ViewFile = new(ViewFileResponse)
-		if err := c.doViewFile(ctx, req.ViewFile, resp.ViewFile); err != nil {
+		if err := h.doViewFile(ctx, req.ViewFile, resp.ViewFile); err != nil {
 			resp.Status = err.Error()
 		}
 	case req.DeleteFile != nil:
 		resp.DeleteFile = new(DeleteFileResponse)
-		if err := c.doDeleteFile(ctx, req.DeleteFile, resp.DeleteFile); err != nil {
+		if err := h.doDeleteFile(ctx, req.DeleteFile, resp.DeleteFile); err != nil {
 			resp.Status = err.Error()
 		}
 	default:
@@ -450,7 +420,7 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	return nil
 }
 
-func GetPublicKeysData(ring *gpg.Keyring) []*past.PublicKeyData {
+func getPublicKeysData(ring *gpg.Keyring) []*past.PublicKeyData {
 	// Identify public keys with the private key and others.
 	skeyMap := make(map[string]*gpg.SecretKey)
 	for _, skey := range ring.SecretKeys() {
@@ -470,29 +440,29 @@ func GetPublicKeysData(ring *gpg.Keyring) []*past.PublicKeyData {
 	return pks
 }
 
-func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, resp *CheckStatusResponse) error {
+func (h *Handler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, resp *CheckStatusResponse) error {
 	if p, err := exec.LookPath("git"); err == nil {
 		resp.GitPath = p
 	}
 	if p, err := exec.LookPath("gpg"); err == nil {
 		resp.GPGPath = p
 	}
-	if c.pstore != nil {
-		resp.PasswordStoreKeys, _ = c.pstore.FileKeys(".")
+	if h.pstore != nil {
+		resp.PasswordStoreKeys, _ = h.pstore.FileKeys(".")
 	}
-	if c.repo != nil {
-		if addr, err := c.repo.GetRemoteURL("past-remote"); err == nil {
+	if h.repo != nil {
+		if addr, err := h.repo.GetRemoteURL("past-remote"); err == nil {
 			resp.Remote = addr
 		}
 	}
-	if c.keyring != nil {
+	if h.ring != nil {
 		// Identify public keys with the private key and others.
-		skeys := c.keyring.SecretKeys()
+		skeys := h.ring.SecretKeys()
 		skeyMap := make(map[string]*gpg.SecretKey)
 		for _, skey := range skeys {
 			skeyMap[skey.Fingerprint] = skey
 		}
-		pkeys := c.keyring.PublicKeys()
+		pkeys := h.ring.PublicKeys()
 		for _, pkey := range pkeys {
 			if !pkey.CanEncrypt {
 				continue
@@ -515,18 +485,18 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 	return nil
 }
 
-func (c *ChromeHandler) doCreateKey(ctx context.Context, req *CreateKeyRequest, resp *CreateKeyResponse) error {
+func (h *Handler) doCreateKey(ctx context.Context, req *CreateKeyRequest, resp *CreateKeyResponse) error {
 	if _, err := gpg.Create(req.Name, req.Email, req.Passphrase, req.KeyLength, req.KeyYears); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *ChromeHandler) doImportKey(ctx context.Context, req *ImportKeyRequest, resp *ImportKeyResponse) error {
-	if c.keyring == nil {
+func (h *Handler) doImportKey(ctx context.Context, req *ImportKeyRequest, resp *ImportKeyResponse) error {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
-	pkeys, skeys, err := c.keyring.Import([]byte(req.Key))
+	pkeys, skeys, err := h.ring.Import([]byte(req.Key))
 	if err != nil {
 		return xerrors.Errorf("could not import new key(s): %w", err)
 	}
@@ -536,17 +506,17 @@ func (c *ChromeHandler) doImportKey(ctx context.Context, req *ImportKeyRequest, 
 	return nil
 }
 
-func (c *ChromeHandler) doEditKey(ctx context.Context, req *EditKeyRequest, resp *EditKeyResponse) error {
-	if c.keyring == nil {
+func (h *Handler) doEditKey(ctx context.Context, req *EditKeyRequest, resp *EditKeyResponse) error {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
-	if err := c.keyring.SetTrusted(req.Fingerprint, req.Trust); err != nil {
+	if err := h.ring.SetTrusted(req.Fingerprint, req.Trust); err != nil {
 		return xerrors.Errorf("could not update key trust status: %w", err)
 	}
-	if err := c.keyring.Refresh(); err != nil {
+	if err := h.ring.Refresh(); err != nil {
 		return xerrors.Errorf("could not refresh keying: %w", err)
 	}
-	for _, pkey := range GetPublicKeysData(c.keyring) {
+	for _, pkey := range getPublicKeysData(h.ring) {
 		if pkey.KeyFingerprint == req.Fingerprint {
 			resp.Key = pkey
 			return nil
@@ -555,11 +525,11 @@ func (c *ChromeHandler) doEditKey(ctx context.Context, req *EditKeyRequest, resp
 	return xerrors.Errorf("could not find the key %q after updating the trust status: %w", req.Fingerprint, os.ErrInvalid)
 }
 
-func (c *ChromeHandler) doExportKey(ctx context.Context, req *ExportKeyRequest, resp *ExportKeyResponse) error {
-	if c.keyring == nil {
+func (h *Handler) doExportKey(ctx context.Context, req *ExportKeyRequest, resp *ExportKeyResponse) error {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
-	data, err := c.keyring.Export(req.Fingerprint)
+	data, err := h.ring.Export(req.Fingerprint)
 	if err != nil {
 		return xerrors.Errorf("could not export key %q: %w", req.Fingerprint, err)
 	}
@@ -567,50 +537,50 @@ func (c *ChromeHandler) doExportKey(ctx context.Context, req *ExportKeyRequest, 
 	return nil
 }
 
-func (c *ChromeHandler) doDeleteKey(ctx context.Context, req *DeleteKeyRequest, resp *DeleteKeyResponse) error {
-	if c.keyring == nil {
+func (h *Handler) doDeleteKey(ctx context.Context, req *DeleteKeyRequest, resp *DeleteKeyResponse) error {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
-	skeys := c.keyring.SecretKeys()
+	skeys := h.ring.SecretKeys()
 	for _, skey := range skeys {
 		if skey.Fingerprint == req.Fingerprint {
-			if err := c.keyring.DeleteSecretKey(req.Fingerprint); err != nil {
+			if err := h.ring.DeleteSecretKey(req.Fingerprint); err != nil {
 				return xerrors.Errorf("could not delete secret key %q: %w", req.Fingerprint, err)
 			}
 			log.Printf("secret key for %q is deleted successfully")
 			break
 		}
 	}
-	if err := c.keyring.Delete(req.Fingerprint); err != nil {
+	if err := h.ring.Delete(req.Fingerprint); err != nil {
 		return xerrors.Errorf("could not delete key %q: %w", req.Fingerprint, err)
 	}
 	return nil
 }
 
-func (c *ChromeHandler) doCreateRepo(ctx context.Context, req *CreateRepoRequest, resp *CreateRepoResponse) error {
-	if c.keyring == nil {
+func (h *Handler) doCreateRepo(ctx context.Context, req *CreateRepoRequest, resp *CreateRepoResponse) error {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
-	if c.pstore != nil {
+	if h.pstore != nil {
 		return xerrors.Errorf("git repository already exists: %w", os.ErrInvalid)
 	}
-	if c.repo == nil {
-		repo, err := git.Init(c.dir)
+	if h.repo == nil {
+		repo, err := git.Init(h.dir)
 		if err != nil {
 			return err
 		}
-		c.repo = repo
+		h.repo = repo
 	}
-	pstore, err := past.Create(c.repo, c.keyring, req.Fingerprints)
+	pstore, err := past.Create(h.repo, h.ring, req.Fingerprints)
 	if err != nil {
 		return err
 	}
-	c.pstore = pstore
+	h.pstore = pstore
 	return nil
 }
 
-func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest, resp *ImportRepoResponse) (status error) {
-	if c.keyring == nil {
+func (h *Handler) doImportRepo(ctx context.Context, req *ImportRepoRequest, resp *ImportRepoResponse) (status error) {
+	if h.ring == nil {
 		return xerrors.Errorf("keyring is not initialized: %w", os.ErrInvalid)
 	}
 
@@ -633,14 +603,14 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 		return xerrors.Errorf("unsupported git url protocol %q: %w", req.Protocol, os.ErrInvalid)
 	}
 
-	repo, err := git.Init(c.dir)
+	repo, err := git.Init(h.dir)
 	if err != nil {
 		return xerrors.Errorf("could not git init: %w", err)
 	}
 	defer func() {
 		if status != nil {
-			if err := os.RemoveAll(c.dir); err != nil {
-				log.Panicf("could not remove temporary git directory %q: %w", c.dir, err)
+			if err := os.RemoveAll(h.dir); err != nil {
+				log.Panicf("could not remove temporary git directory %q: %w", h.dir, err)
 			}
 		}
 	}()
@@ -649,7 +619,7 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 	if len(req.Password) > 0 {
 		reqPassword := url.QueryEscape(req.Password)
 		creds := fmt.Sprintf("%s://%s:%s@%s\n", req.Protocol, reqUsername, reqPassword, req.Hostname)
-		credStore := filepath.Join(c.dir, ".past-remote-credentials")
+		credStore := filepath.Join(h.dir, ".past-remote-credentials")
 		file, err := os.OpenFile(credStore, os.O_CREATE|os.O_WRONLY, os.FileMode(0600))
 		if err != nil {
 			return xerrors.Errorf("could not create credential store file %q: %w", credStore, err)
@@ -682,8 +652,8 @@ func (c *ChromeHandler) doImportRepo(ctx context.Context, req *ImportRepoRequest
 	return nil
 }
 
-func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, resp *AddRemoteResponse) (status error) {
-	if c.repo == nil {
+func (h *Handler) doAddRemote(ctx context.Context, req *AddRemoteRequest, resp *AddRemoteResponse) (status error) {
+	if h.repo == nil {
 		return xerrors.Errorf("git repository is not initialized: %w", os.ErrInvalid)
 	}
 
@@ -703,12 +673,12 @@ func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, 
 		return xerrors.Errorf("unsupported git url protocol %q: %w", req.Protocol, os.ErrInvalid)
 	}
 
-	if err := c.repo.AddRemote(remoteName, remoteURL); err != nil {
+	if err := h.repo.AddRemote(remoteName, remoteURL); err != nil {
 		return xerrors.Errorf("could not add remote %q: %w", remoteName, err)
 	}
 	defer func() {
 		if status != nil {
-			if err := c.repo.RemoveRemote(remoteName); err != nil {
+			if err := h.repo.RemoveRemote(remoteName); err != nil {
 				log.Panicf("could not undo adding remote %q: %w", remoteName, err)
 			}
 		}
@@ -720,7 +690,7 @@ func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, 
 	if len(req.Password) > 0 {
 		reqPassword := url.QueryEscape(req.Password)
 		creds := fmt.Sprintf("%s://%s:%s@%s\n", req.Protocol, reqUsername, reqPassword, req.Hostname)
-		credStore := filepath.Join(c.dir, ".past-remote-credentials")
+		credStore := filepath.Join(h.dir, ".past-remote-credentials")
 		file, err := os.OpenFile(credStore, os.O_CREATE|os.O_WRONLY, os.FileMode(0600))
 		if err != nil {
 			return xerrors.Errorf("could not create credential store file %q: %w", credStore, err)
@@ -731,7 +701,7 @@ func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, 
 		}
 		// Configure git credential store.
 		configValue := fmt.Sprintf("store --file=%s", credStore)
-		if err := c.repo.SetConfg("credential.helper", configValue); err != nil {
+		if err := h.repo.SetConfg("credential.helper", configValue); err != nil {
 			return xerrors.Errorf("could not configure credential store: %w", err)
 		}
 		defer func() {
@@ -739,7 +709,7 @@ func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, 
 				if err := os.Remove(credStore); err != nil {
 					log.Printf("error: could not remove credential store: %w", err)
 				}
-				if err := c.repo.UnsetConfig("credential.helper"); err != nil {
+				if err := h.repo.UnsetConfig("credential.helper"); err != nil {
 					log.Printf("error: could not unset credential helper: %w", err)
 				}
 			}
@@ -748,38 +718,38 @@ func (c *ChromeHandler) doAddRemote(ctx context.Context, req *AddRemoteRequest, 
 
 	syncReq := &SyncRemoteRequest{Fetch: true}
 	syncResp := new(SyncRemoteResponse)
-	if err := c.doSyncRemote(ctx, syncReq, syncResp); err != nil {
+	if err := h.doSyncRemote(ctx, syncReq, syncResp); err != nil {
 		return xerrors.Errorf("could not determine the diff with remote %q: %w", remoteName, err)
 	}
 	resp.SyncRemote = syncResp
 	return nil
 }
 
-func (c *ChromeHandler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest, resp *SyncRemoteResponse) error {
-	if c.repo == nil {
+func (h *Handler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest, resp *SyncRemoteResponse) error {
+	if h.repo == nil {
 		return xerrors.Errorf("git repository is not initialized: %w", os.ErrInvalid)
 	}
 	remoteName := "past-remote"
 	remoteMaster := "past-remote/master"
 	switch {
 	case req.Fetch:
-		if err := c.repo.Fetch(remoteName); err != nil {
+		if err := h.repo.Fetch(remoteName); err != nil {
 			return xerrors.Errorf("could not fetch from remote: %w", err)
 		}
 	case req.Push:
-		if err := c.repo.PushOverwrite(remoteName, "master"); err != nil {
+		if err := h.repo.PushOverwrite(remoteName, "master"); err != nil {
 			return xerrors.Errorf("could not push to %q: %w", remoteMaster, err)
 		}
 	case req.Pull:
-		if err := c.repo.Reset(remoteMaster); err != nil {
+		if err := h.repo.Reset(remoteMaster); err != nil {
 			return xerrors.Errorf("could not pull from %q: %w", remoteMaster, err)
 		}
 	}
-	head, err := c.repo.GetLogItem("HEAD")
+	head, err := h.repo.GetLogItem("HEAD")
 	if err != nil {
 		return xerrors.Errorf("could not get head log tip: %w", err)
 	}
-	remote, err := c.repo.GetLogItem(remoteMaster)
+	remote, err := h.repo.GetLogItem(remoteMaster)
 	if err != nil {
 		return xerrors.Errorf("could not get %q log tip: %w", remoteMaster, err)
 	}
@@ -787,10 +757,10 @@ func (c *ChromeHandler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest
 	resp.Remote = remote
 
 	if head.Commit != remote.Commit {
-		if yes, _ := c.repo.IsAncestor(head.Commit, remote.Commit); yes {
+		if yes, _ := h.repo.IsAncestor(head.Commit, remote.Commit); yes {
 			// Remote master has more commits than head.
 			resp.NewerCommit = remote.Commit
-		} else if yes, _ := c.repo.IsAncestor(remote.Commit, head.Commit); yes {
+		} else if yes, _ := h.repo.IsAncestor(remote.Commit, head.Commit); yes {
 			// Head has more commits than remote master.
 			resp.NewerCommit = head.Commit
 		}
@@ -799,11 +769,11 @@ func (c *ChromeHandler) doSyncRemote(ctx context.Context, req *SyncRemoteRequest
 	return nil
 }
 
-func (c *ChromeHandler) doScanStore(ctx context.Context, req *ScanStoreRequest, resp *ScanStoreResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doScanStore(ctx context.Context, req *ScanStoreRequest, resp *ScanStoreResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is not initialized: %w", os.ErrInvalid)
 	}
-	if c.keyring == nil {
+	if h.ring == nil {
 		return xerrors.Errorf("key ring is not initialized: %w", os.ErrInvalid)
 	}
 	resp.KeyMap = make(map[string]*past.PublicKeyData)
@@ -813,18 +783,18 @@ func (c *ChromeHandler) doScanStore(ctx context.Context, req *ScanStoreRequest, 
 	resp.MissingKeyFileCountMap = make(map[string]int)
 	// Scan the recipient key ids for each encrypted file, so that we can report
 	// number of files accessible to each key id (including the missing key ids).
-	files, err := c.pstore.ListFiles()
+	files, err := h.pstore.ListFiles()
 	if err != nil {
 		return xerrors.Errorf("could not list files in the password store: %w", err)
 	}
 	resp.NumFiles = len(files)
 	for _, file := range files {
-		rs, err := c.pstore.Recipients(file)
+		rs, err := h.pstore.Recipients(file)
 		if err != nil {
 			return xerrors.Errorf("couldn't determine recipients for file %q: %w", file, err)
 		}
 		for _, r := range rs {
-			pkey, err := c.pstore.RecipientPublicKey(r)
+			pkey, err := h.pstore.RecipientPublicKey(r)
 			if err != nil {
 				if !xerrors.Is(err, os.ErrNotExist) {
 					return xerrors.Errorf("could not determine public key for %q: %w", r, err)
@@ -836,7 +806,7 @@ func (c *ChromeHandler) doScanStore(ctx context.Context, req *ScanStoreRequest, 
 			resp.KeyFileCountMap[pkey.KeyFingerprint]++
 		}
 	}
-	for _, pkey := range GetPublicKeysData(c.keyring) {
+	for _, pkey := range getPublicKeysData(h.ring) {
 		if _, ok := resp.KeyMap[pkey.KeyFingerprint]; !ok {
 			resp.UnusedKeyMap[pkey.KeyFingerprint] = pkey
 		}
@@ -844,11 +814,11 @@ func (c *ChromeHandler) doScanStore(ctx context.Context, req *ScanStoreRequest, 
 	return nil
 }
 
-func (c *ChromeHandler) doAddRecipient(ctx context.Context, req *AddRecipientRequest, resp *AddRecipientResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doAddRecipient(ctx context.Context, req *AddRecipientRequest, resp *AddRecipientResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is not initialized: %w", os.ErrInvalid)
 	}
-	keys, err := c.pstore.FileKeys(".")
+	keys, err := h.pstore.FileKeys(".")
 	if err != nil {
 		return xerrors.Errorf("could not determine current gpg ids: %w", err)
 	}
@@ -858,23 +828,23 @@ func (c *ChromeHandler) doAddRecipient(ctx context.Context, req *AddRecipientReq
 		}
 	}
 	keys = append(keys, req.Fingerprint)
-	if err := c.pstore.Reinit(".", keys, req.NumSkip); err != nil {
+	if err := h.pstore.Reinit(".", keys, req.NumSkip); err != nil {
 		return xerrors.Errorf("could not reinitialize with a recipient add: %w", err)
 	}
 	ssReq := new(ScanStoreRequest)
 	ssResp := new(ScanStoreResponse)
-	if err := c.doScanStore(ctx, ssReq, ssResp); err != nil {
+	if err := h.doScanStore(ctx, ssReq, ssResp); err != nil {
 		return xerrors.Errorf("could not scan store after adding recipient: %w", err)
 	}
 	resp.ScanStore = ssResp
 	return nil
 }
 
-func (c *ChromeHandler) doRemoveRecipient(ctx context.Context, req *RemoveRecipientRequest, resp *RemoveRecipientResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doRemoveRecipient(ctx context.Context, req *RemoveRecipientRequest, resp *RemoveRecipientResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is not initialized: %w", os.ErrInvalid)
 	}
-	keys, err := c.pstore.FileKeys(".")
+	keys, err := h.pstore.FileKeys(".")
 	if err != nil {
 		return xerrors.Errorf("could not determine current gpg ids: %w", err)
 	}
@@ -888,20 +858,20 @@ func (c *ChromeHandler) doRemoveRecipient(ctx context.Context, req *RemoveRecipi
 	if len(newKeys) == len(keys) {
 		return xerrors.Errorf("key %q is not a recipient: %w", req.Fingerprint, os.ErrExist)
 	}
-	if err := c.pstore.Reinit(".", newKeys, req.NumSkip); err != nil {
+	if err := h.pstore.Reinit(".", newKeys, req.NumSkip); err != nil {
 		return xerrors.Errorf("could not reinitialize with a recipient removed: %w", err)
 	}
 	ssReq := new(ScanStoreRequest)
 	ssResp := new(ScanStoreResponse)
-	if err := c.doScanStore(ctx, ssReq, ssResp); err != nil {
+	if err := h.doScanStore(ctx, ssReq, ssResp); err != nil {
 		return xerrors.Errorf("could not scan store after removing recipient: %w", err)
 	}
 	resp.ScanStore = ssResp
 	return nil
 }
 
-func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp *AddFileResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doAddFile(ctx context.Context, req *AddFileRequest, resp *AddFileResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to add file: %w", os.ErrInvalid)
 	}
 
@@ -917,14 +887,14 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 	}
 
 	data := past.Format(req.Password, vs.Bytes())
-	if err := c.pstore.CreateFile(req.Filename, data, os.FileMode(0644)); err != nil {
+	if err := h.pstore.CreateFile(req.Filename, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not add new file: %w", err)
 	}
 	return nil
 }
 
-func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, resp *EditFileResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doEditFile(ctx context.Context, req *EditFileRequest, resp *EditFileResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to edit file: %w", os.ErrInvalid)
 	}
 
@@ -940,23 +910,23 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 
 	data := past.Format(req.Password, vs.Bytes())
 	if len(req.OrigFile) > 0 && req.OrigFile != req.Filename {
-		if err := c.pstore.ReplaceFile(req.OrigFile, req.Filename, data); err != nil {
+		if err := h.pstore.ReplaceFile(req.OrigFile, req.Filename, data); err != nil {
 			return xerrors.Errorf("could not replace file %q: %w", req.OrigFile, err)
 		}
 	} else {
-		if err := c.pstore.UpdateFile(req.Filename, data); err != nil {
+		if err := h.pstore.UpdateFile(req.Filename, data); err != nil {
 			return xerrors.Errorf("could not update file %q: %w", req.Filename, err)
 		}
 	}
 	return nil
 }
 
-func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, resp *ListFilesResponse) error {
-	if c.pstore == nil {
-		return xerrors.Errorf("password store is unavailable to list files (%+v): %w", *c, os.ErrInvalid)
+func (h *Handler) doListFiles(ctx context.Context, req *ListFilesRequest, resp *ListFilesResponse) error {
+	if h.pstore == nil {
+		return xerrors.Errorf("password store is not initialized to list files: %w", os.ErrInvalid)
 	}
 
-	files, err := c.repo.ListFiles()
+	files, err := h.repo.ListFiles()
 	if err != nil {
 		return xerrors.Errorf("could not list files in the git directory: %w", err)
 	}
@@ -969,17 +939,17 @@ func (c *ChromeHandler) doListFiles(ctx context.Context, req *ListFilesRequest, 
 	return nil
 }
 
-func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, resp *ViewFileResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doViewFile(ctx context.Context, req *ViewFileRequest, resp *ViewFileResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to view file: %w", os.ErrInvalid)
 	}
 
 	file := filepath.Join("./", req.Filename+".gpg")
-	encrypted, err := c.repo.ReadFile(file)
+	encrypted, err := h.repo.ReadFile(file)
 	if err != nil {
 		return xerrors.Errorf("could not get login entry with name %q: %w", req.Filename, err)
 	}
-	decrypted, err := c.keyring.Decrypt(encrypted)
+	decrypted, err := h.ring.Decrypt(encrypted)
 	if err != nil {
 		return xerrors.Errorf("could not decrypt login entry %q: %w", req.Filename, err)
 	}
@@ -1011,13 +981,13 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 	return nil
 }
 
-func (c *ChromeHandler) doDeleteFile(ctx context.Context, req *DeleteFileRequest, resp *DeleteFileResponse) error {
-	if c.pstore == nil {
+func (h *Handler) doDeleteFile(ctx context.Context, req *DeleteFileRequest, resp *DeleteFileResponse) error {
+	if h.pstore == nil {
 		return xerrors.Errorf("password store is unavailable to delete file: %w", os.ErrInvalid)
 	}
 
 	file := filepath.Clean(filepath.Join("./", req.File+".gpg"))
-	if err := c.repo.RemoveFile(file); err != nil {
+	if err := h.repo.RemoveFile(file); err != nil {
 		return xerrors.Errorf("could not remove file %q: %w", file, err)
 	}
 	return nil
