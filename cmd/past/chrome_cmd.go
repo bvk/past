@@ -336,6 +336,12 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	}
 
 	var resp ChromeResponse
+	defer func() {
+		if len(resp.Status) > 0 {
+			log.Printf("error: operation has failed with response status: %s", resp.Status)
+		}
+	}()
+
 	switch {
 	case req.CheckStatus != nil:
 		resp.CheckStatus = new(CheckStatusResponse)
