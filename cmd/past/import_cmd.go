@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bvk/past/store"
+	"github.com/bvk/past"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -109,7 +109,7 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 			continue
 		}
 
-		vs := store.NewValues(nil)
+		vs := past.NewValues(nil)
 		sitename := fields[sitenameOffset]
 		username := fields[usernameOffset]
 		password := fields[passwordOffset]
@@ -119,7 +119,7 @@ func importChromePasswords(flags *pflag.FlagSet, file string) error {
 			}
 		}
 
-		data := store.Format(password, vs.Bytes())
+		data := past.Format(password, vs.Bytes())
 		filename := filepath.Join(sitename, username)
 
 		if err := ps.CreateFile(filename, data, os.FileMode(0644)); err != nil {

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 BVK Chaitanya
 
-package store
+package past
 
 import (
 	"bytes"

@@ -16,9 +16,9 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/bvk/past"
 	"github.com/bvk/past/git"
 	"github.com/bvk/past/gpg"
-	"github.com/bvk/past/store"
 
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
@@ -55,7 +55,7 @@ func cmdChrome(flags *pflag.FlagSet, args []string) (status error) {
 
 	repo, _ := git.NewDir(dataDir)
 	keyring, _ := gpg.NewKeyring("")
-	pstore, _ := store.New(repo, keyring)
+	pstore, _ := past.New(repo, keyring)
 
 	h := ChromeHandler{
 		dir:     dataDir,
@@ -129,9 +129,9 @@ type CheckStatusResponse struct {
 	GPGPath string `json:"gpg_path"`
 	GitPath string `json:"git_path"`
 
-	LocalKeys   []*store.PublicKeyData `json:"local_keys"`
-	RemoteKeys  []*store.PublicKeyData `json:"remote_keys"`
-	ExpiredKeys []*store.PublicKeyData `json:"expired_keys"`
+	LocalKeys   []*past.PublicKeyData `json:"local_keys"`
+	RemoteKeys  []*past.PublicKeyData `json:"remote_keys"`
+	ExpiredKeys []*past.PublicKeyData `json:"expired_keys"`
 
 	PasswordStoreKeys []string `json:"password_store_keys"`
 
@@ -207,7 +207,7 @@ type EditKeyRequest struct {
 }
 
 type EditKeyResponse struct {
-	Key *store.PublicKeyData `json:"key"`
+	Key *past.PublicKeyData `json:"key"`
 }
 
 type ExportKeyRequest struct {
@@ -231,8 +231,8 @@ type ScanStoreRequest struct {
 type ScanStoreResponse struct {
 	NumFiles int `json:"num_files"`
 
-	KeyMap       map[string]*store.PublicKeyData `json:"key_map"`
-	UnusedKeyMap map[string]*store.PublicKeyData `json:"unused_key_map"`
+	KeyMap       map[string]*past.PublicKeyData `json:"key_map"`
+	UnusedKeyMap map[string]*past.PublicKeyData `json:"unused_key_map"`
 
 	KeyFileCountMap        map[string]int `json:"key_file_count_map"`
 	MissingKeyFileCountMap map[string]int `json:"missing_key_file_count_map"`
@@ -310,7 +310,7 @@ type ChromeHandler struct {
 	dir     string
 	repo    *git.Dir
 	keyring *gpg.Keyring
-	pstore  *store.PasswordStore
+	pstore  *past.PasswordStore
 }
 
 func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Writer) (status error) {
@@ -444,21 +444,21 @@ func (c *ChromeHandler) ServeChrome(ctx context.Context, in io.Reader, out io.Wr
 	return nil
 }
 
-func GetPublicKeysData(ring *gpg.Keyring) []*store.PublicKeyData {
+func GetPublicKeysData(ring *gpg.Keyring) []*past.PublicKeyData {
 	// Identify public keys with the private key and others.
 	skeyMap := make(map[string]*gpg.SecretKey)
 	for _, skey := range ring.SecretKeys() {
 		skeyMap[skey.Fingerprint] = skey
 	}
-	var pks []*store.PublicKeyData
+	var pks []*past.PublicKeyData
 	for _, pkey := range ring.PublicKeys() {
 		if !pkey.CanEncrypt {
 			continue
 		}
 		if skey, ok := skeyMap[pkey.Fingerprint]; ok {
-			pks = append(pks, store.ToPublicKeyData(pkey, skey))
+			pks = append(pks, past.ToPublicKeyData(pkey, skey))
 		} else {
-			pks = append(pks, store.ToPublicKeyData(pkey, nil))
+			pks = append(pks, past.ToPublicKeyData(pkey, nil))
 		}
 	}
 	return pks
@@ -491,11 +491,11 @@ func (c *ChromeHandler) doCheckStatus(ctx context.Context, req *CheckStatusReque
 			if !pkey.CanEncrypt {
 				continue
 			}
-			var v *store.PublicKeyData
+			var v *past.PublicKeyData
 			if skey, ok := skeyMap[pkey.Fingerprint]; ok {
-				v = store.ToPublicKeyData(pkey, skey)
+				v = past.ToPublicKeyData(pkey, skey)
 			} else {
-				v = store.ToPublicKeyData(pkey, nil)
+				v = past.ToPublicKeyData(pkey, nil)
 			}
 			if v.CanDecrypt {
 				resp.LocalKeys = append(resp.LocalKeys, v)
@@ -595,7 +595,7 @@ func (c *ChromeHandler) doCreateRepo(ctx context.Context, req *CreateRepoRequest
 		}
 		c.repo = repo
 	}
-	pstore, err := store.Create(c.repo, c.keyring, req.Fingerprints)
+	pstore, err := past.Create(c.repo, c.keyring, req.Fingerprints)
 	if err != nil {
 		return err
 	}
@@ -800,8 +800,8 @@ func (c *ChromeHandler) doScanStore(ctx context.Context, req *ScanStoreRequest, 
 	if c.keyring == nil {
 		return xerrors.Errorf("key ring is not initialized: %w", os.ErrInvalid)
 	}
-	resp.KeyMap = make(map[string]*store.PublicKeyData)
-	resp.UnusedKeyMap = make(map[string]*store.PublicKeyData)
+	resp.KeyMap = make(map[string]*past.PublicKeyData)
+	resp.UnusedKeyMap = make(map[string]*past.PublicKeyData)
 
 	resp.KeyFileCountMap = make(map[string]int)
 	resp.MissingKeyFileCountMap = make(map[string]int)
@@ -899,7 +899,7 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 		return xerrors.Errorf("password store is unavailable to add file: %w", os.ErrInvalid)
 	}
 
-	vs := store.NewValues(nil)
+	vs := past.NewValues(nil)
 	for _, other := range req.Rest {
 		vs.Set(other[0], other[1])
 	}
@@ -910,7 +910,7 @@ func (c *ChromeHandler) doAddFile(ctx context.Context, req *AddFileRequest, resp
 		req.Filename = filepath.Join("./", req.Sitename, req.Username)
 	}
 
-	data := store.Format(req.Password, vs.Bytes())
+	data := past.Format(req.Password, vs.Bytes())
 	if err := c.pstore.CreateFile(req.Filename, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not add new file: %w", err)
 	}
@@ -922,7 +922,7 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 		return xerrors.Errorf("password store is unavailable to edit file: %w", os.ErrInvalid)
 	}
 
-	vs := store.NewValues([]byte(req.Data))
+	vs := past.NewValues([]byte(req.Data))
 	vs.Set("username", req.Username)
 	vs.Set("sitename", req.Sitename)
 
@@ -932,7 +932,7 @@ func (c *ChromeHandler) doEditFile(ctx context.Context, req *EditFileRequest, re
 		vs.Del("sitename")
 	}
 
-	data := store.Format(req.Password, vs.Bytes())
+	data := past.Format(req.Password, vs.Bytes())
 	if len(req.OrigFile) > 0 && req.OrigFile != req.Filename {
 		if err := c.pstore.ReplaceFile(req.OrigFile, req.Filename, data); err != nil {
 			return xerrors.Errorf("could not replace file %q: %w", req.OrigFile, err)
@@ -977,8 +977,8 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 	if err != nil {
 		return xerrors.Errorf("could not decrypt login entry %q: %w", req.Filename, err)
 	}
-	password, data := store.Parse(decrypted)
-	values := store.NewValues(data)
+	password, data := past.Parse(decrypted)
+	values := past.NewValues(data)
 
 	// Sitename and username are chosen from the filepath by default if the file
 	// path is in `site.com/user.gpg` format. However, key-value pairs in the
@@ -993,7 +993,7 @@ func (c *ChromeHandler) doViewFile(ctx context.Context, req *ViewFileRequest, re
 	}
 
 	username := filepath.Base(req.Filename)
-	if us := store.GetUsernames(values); len(us) > 0 {
+	if us := past.GetUsernames(values); len(us) > 0 {
 		username = us[0]
 	}
 

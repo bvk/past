@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/bvk/past/store"
+	"github.com/bvk/past"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
@@ -60,12 +60,12 @@ func cmdInsert(cmd *cobra.Command, args []string) (status error) {
 		return xerrors.Errorf("passwords do not match: %w", os.ErrInvalid)
 	}
 
-	vs := store.NewValues(nil)
+	vs := past.NewValues(nil)
 	if len(user) > 0 {
 		vs.Set("username", user)
 	}
 
-	data := store.Format(passwd1, vs.Bytes())
+	data := past.Format(passwd1, vs.Bytes())
 	if err := ps.CreateFile(file, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not insert new file %q: %w", file, err)
 	}

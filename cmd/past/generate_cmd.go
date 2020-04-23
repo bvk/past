@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/bvk/past/store"
+	"github.com/bvk/past"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -91,12 +91,12 @@ func cmdGenerate(cmd *cobra.Command, args []string) (status error) {
 		}
 	}
 
-	vs := store.NewValues(nil)
+	vs := past.NewValues(nil)
 	if len(user) > 0 {
 		vs.Set("username", user)
 	}
 
-	data := store.Format(buf.String(), vs.Bytes())
+	data := past.Format(buf.String(), vs.Bytes())
 	if err := ps.CreateFile(file, data, os.FileMode(0644)); err != nil {
 		return xerrors.Errorf("could not insert new file %q: %w", file, err)
 	}
