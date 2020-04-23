@@ -1,4 +1,5 @@
 {
+  "key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn0WHS8gETXd5PtrDzztVWyPn/sY6c5JgvadhoRg/0d1ZlteeMa8zSTxS5EOu5wjFYcBQzB6vmSpf7keNbvrpMNVkAV61Um/XYkXqkVCbepFTeNLU7urBbT0EZX2EPgNUcxDK1OuVouUT9naMNkCLoGL+mtkkvPDmdeZ3OYqAtoJ6ZkLfcVrnK0Qub7hsmptRngvDZ04X72ZunsC1RCFnyZhhbgk8kWoyjzfftsxS3eLDVAXO1f6cljZzq8Ehi4LIWDW6gfoYpC30TU8lz2FPRGDa9//GoGmJ3jv3s0a9WlNxMrvrNHs9IZMvFnGbZduYDEMrru92yyjjJthHvH2CtwIDAQAB",
   "name": "Password-Store Extension",
   "version": "1.0",
   "manifest_version": 2,
