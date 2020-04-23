@@ -77,6 +77,11 @@ function onStatusPageDisplay(page) {
         onStatusPageRemoveButton(page, pkey, removeButton);
       });
       removeButton.disabled = pkey.can_decrypt && numDecrpt == 1 && count > 0;
+      if (removeButton.disabled) {
+        let reason = newkey.getElementsByClassName("status-page-recipient-reason")[0];
+        reason.textContent = "onlykey";
+        reason.style.display = "";
+      }
 
       let keyid = newkey.getElementsByClassName("status-page-recipient-keyid")[0];
       keyid.setAttribute("username", pkey.user_name);
@@ -113,6 +118,11 @@ function onStatusPageDisplay(page) {
         onStatusPageAddButton(page, pkey, addButton);
       });
       addButton.disabled = !pkey.is_trusted;
+      if (addButton.disabled) {
+        let reason = newkey.getElementsByClassName("status-page-available-reason")[0];
+        reason.textContent = "untrusted";
+        reason.style.display = "";
+      }
 
       let keyid = newkey.getElementsByClassName("status-page-available-keyid")[0];
       keyid.setAttribute("username", pkey.user_name);
