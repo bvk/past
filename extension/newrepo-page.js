@@ -73,49 +73,120 @@ function createNewrepoPage(params) {
     onNewrepoPageDoneButton(page, doneButton);
   });
 
-  // Create local key list items dynamically.
-  if (params && params.check_status && params.check_status.local_keys) {
-    let keyItem = page.getElementsByClassName("newrepo-page-localkey-item")[0];
-    for (let i = 0; i < params.check_status.local_keys.length; i++) {
-      let key = params.check_status.local_keys[i];
-
-      let item = keyItem.cloneNode(true);
-      item.setAttribute("key-fingerprint", key.key_fingerprint);
-      item.setAttribute("key-state", "off");
-      item.getElementsByClassName("newrepo-page-key")[0].textContent = key.user_email;
-      item.addEventListener("click", function() {
-        onNewrepoPageKeyItem(page, item);
-      });
-
-      keyItem.parentNode.insertBefore(item, keyItem.nextSibling);
-    }
-    keyItem.remove();
-  }
-
-  // Create remote key list if at least one remote key exist. It is hidden by default.
-  if (params && params.check_status && params.check_status.remote_keys) {
-    let keyItem = page.getElementsByClassName("newrepo-page-remotekey-item")[0];
-    for (let i = 0; i < params.check_status.local_keys.length; i++) {
-      let key = params.check_status.local_keys[i];
-
-      let item = keyItem.cloneNode(true);
-      item.setAttribute("key-fingerprint", key.key_fingerprint);
-      item.setAttribute("key-state", "off");
-      item.getElementsByClassName("newrepo-page-key")[0].textContent = key.user_email;
-      item.addEventListener("click", function() {
-        onNewrepoPageKeyItem(page, item);
-      });
-
-      keyItem.parentNode.insertBefore(item, keyItem.nextSibling);
-    }
-    keyItem.remove();
-    page.getElementsByClassName("newrepo-page-remotekeys-section")[0].style.display = "";
-  }
-
   return page;
 }
 
+function getNewrepoPageNextKeyIDType(idtype) {
+  if (idtype == "username") {
+    return "useremail";
+  }
+  if (idtype == "useremail") {
+    return "fingerprint";
+  }
+  if (idtype == "fingerprint") {
+    return "username";
+  }
+  return idtype;
+}
+
 function onNewrepoPageDisplay(page) {
+  let params = JSON.parse(page.getAttribute("page-params"));
+
+  // Create local key list items dynamically.
+  if (params && params.check_status && params.check_status.local_keys) {
+    let template = page.getElementsByClassName("newrepo-page-local-key-template")[0];
+    // TODO: Also remove all nextSiblings of the template.
+    for (let i = 0; i < params.check_status.local_keys.length; i++) {
+      let key = params.check_status.local_keys[i];
+      let newkey = template.cloneNode(true);
+
+      let checkbox = newkey.getElementsByClassName("newrepo-page-localkey-checkbox")[0];
+      checkbox.setAttribute("key-state", "off");
+      checkbox.setAttribute("key-fingerprint", key.key_fingerprint);
+      checkbox.addEventListener("click", function() {
+        onNewrepoPageKeyListCheckbox(page, checkbox);
+      });
+
+      let keyid = newkey.getElementsByClassName("newrepo-page-localkey-keyid")[0];
+      keyid.setAttribute("username", key.user_name);
+      keyid.setAttribute("useremail", key.user_email);
+      keyid.setAttribute("fingerprint", key.key_fingerprint);
+
+      keyid.textContent = key.user_name;
+      keyid.setAttribute("keyid_type", "username");
+      keyid.addEventListener("click", function() {
+        let idtype = getNewrepoPageNextKeyIDType(keyid.getAttribute("keyid_type"));
+        keyid.textContent = keyid.getAttribute(idtype);
+        keyid.setAttribute("keyid_type", idtype);
+      });
+
+      newkey.style.display = "";
+      template.parentNode.insertBefore(newkey, template.nextSibling);
+    }
+  }
+
+  // Create remote key list items dynamically.
+  if (params && params.check_status && params.check_status.remote_keys) {
+    let template = page.getElementsByClassName("newrepo-page-remote-key-template")[0];
+    // TODO: Also remove all nextSiblings of the template.
+    for (let i = 0; i < params.check_status.remote_keys.length; i++) {
+      let key = params.check_status.remote_keys[i];
+      let newkey = template.cloneNode(true);
+
+      let checkbox = newkey.getElementsByClassName("newrepo-page-remotekey-checkbox")[0];
+      if (!key.is_trusted) {
+        checkbox.disabled = true;
+      }
+      checkbox.setAttribute("key-state", "off");
+      checkbox.setAttribute("key-fingerprint", key.key_fingerprint);
+      checkbox.addEventListener("click", function() {
+        onNewrepoPageKeyListCheckbox(page, checkbox);
+      });
+
+      let keyid = newkey.getElementsByClassName("newrepo-page-remotekey-keyid")[0];
+      keyid.setAttribute("username", key.user_name);
+      keyid.setAttribute("useremail", key.user_email);
+      keyid.setAttribute("fingerprint", key.key_fingerprint);
+
+      keyid.textContent = key.user_name;
+      keyid.setAttribute("keyid_type", "username");
+      keyid.addEventListener("click", function() {
+        let idtype = getNewrepoPageNextKeyIDType(keyid.getAttribute("keyid_type"));
+        keyid.textContent = keyid.getAttribute(idtype);
+        keyid.setAttribute("keyid_type", idtype);
+      });
+
+      newkey.style.display = "";
+      template.parentNode.insertBefore(newkey, template.nextSibling);
+    }
+  }
+
+  // Create expired key list items dynamically.
+  if (params && params.check_status && params.check_status.expired_keys) {
+    let template = page.getElementsByClassName("newrepo-page-expired-key-template")[0];
+    // TODO: Also remove all nextSiblings of the template.
+    for (let i = 0; i < params.check_status.expired_keys.length; i++) {
+      let key = params.check_status.expired_keys[i];
+      let newkey = template.cloneNode(true);
+
+      let keyid = newkey.getElementsByClassName("newrepo-page-expiredkey-keyid")[0];
+      keyid.setAttribute("username", key.user_name);
+      keyid.setAttribute("useremail", key.user_email);
+      keyid.setAttribute("fingerprint", key.key_fingerprint);
+
+      keyid.textContent = key.user_name;
+      keyid.setAttribute("keyid_type", "username");
+      keyid.addEventListener("click", function() {
+        let idtype = getNewrepoPageNextKeyIDType(keyid.getAttribute("keyid_type"));
+        keyid.textContent = keyid.getAttribute(idtype);
+        keyid.setAttribute("keyid_type", idtype);
+      });
+
+      newkey.style.display = "";
+      template.parentNode.insertBefore(newkey, template.nextSibling);
+    }
+  }
+
   onNewrepoPageDisplayTab(page, "newrepo-page-import-button")
 }
 
@@ -221,18 +292,30 @@ function onNewrepoPageKeyItem(page, keyItem) {
   autoNewrepoPageDoneButton(page);
 }
 
-function onNewrepoPageCreateTabUndoButton(page, undoButton) {
-  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
-  for (let i = 0; i < localkeys.length; i++) {
-    let checkbox = localkeys[i].getElementsByClassName("newrepo-page-checkbox")[0];
+function onNewrepoPageKeyListCheckbox(page, checkbox) {
+  let state = checkbox.getAttribute("key-state");
+  if (state == "on") {
+    checkbox.setAttribute("key-state", "off");
     checkbox.textContent = "check_box_outline_blank";
+  } else {
+    checkbox.setAttribute("key-state", "on");
+    checkbox.textContent = "check_box";
+  }
+
+  autoNewrepoPageUndoButton(page);
+  autoNewrepoPageDoneButton(page);
+}
+
+function onNewrepoPageCreateTabUndoButton(page, undoButton) {
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-checkbox");
+  for (let i = 0; i < localkeys.length; i++) {
+    localkeys[i].textContent = "check_box_outline_blank";
     localkeys[i].setAttribute("key-state", "off");
   }
 
-  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-checkbox");
   for (let i = 0; i < remotekeys.length; i++) {
-    let checkbox = remotekeys[i].getElementsByClassName("newrepo-page-checkbox")[0];
-    checkbox.textContent = "check_box_outline_blank";
+    remotekeys[i].textContent = "check_box_outline_blank";
     remotekeys[i].setAttribute("key-state", "off");
   }
 
@@ -280,7 +363,7 @@ function onNewrepoPageUndoButton(page, undoButton) {
 
 function onNewrepoPageCreateTabDoneButton(page, doneButton) {
   let fingerprints = [];
-  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-checkbox");
   for (let i = 0; i < localkeys.length; i++) {
     let state = localkeys[i].getAttribute("key-state");
     let fingerprint = localkeys[i].getAttribute("key-fingerprint");
@@ -288,7 +371,7 @@ function onNewrepoPageCreateTabDoneButton(page, doneButton) {
       fingerprints.push(fingerprint);
     }
   }
-  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-checkbox");
   for (let i = 0; i < remotekeys.length; i++) {
     let state = remotekeys[i].getAttribute("key-state");
     let fingerprint = remotekeys[i].getAttribute("key-fingerprint");
@@ -366,7 +449,7 @@ function onNewrepoPageCreateRepoResponse(page, req, resp) {
 
 function autoNewrepoPageCreateTabUndoButton(page, undoButton) {
   let disable = true;
-  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-checkbox");
   for (let i = 0; i < localkeys.length; i++) {
     let state = localkeys[i].getAttribute("key-state");
     if (state == "on") {
@@ -374,7 +457,7 @@ function autoNewrepoPageCreateTabUndoButton(page, undoButton) {
       break;
     }
   }
-  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-item");
+  let remotekeys = page.getElementsByClassName("newrepo-page-remotekey-checkbox");
   for (let i = 0; disable && i < remotekeys.length; i++) {
     let state = remotekeys[i].getAttribute("key-state");
     if (state == "on") {
@@ -422,7 +505,7 @@ function autoNewrepoPageUndoButton(page, undoButton) {
 function autoNewrepoPageCreateTabDoneButton(page, doneButton) {
   let disable = true;
 
-  let localkeys = page.getElementsByClassName("newrepo-page-localkey-item");
+  let localkeys = page.getElementsByClassName("newrepo-page-localkey-checkbox");
   for (let i = 0; i < localkeys.length; i++) {
     let state = localkeys[i].getAttribute("key-state");
     if (state == "on") {

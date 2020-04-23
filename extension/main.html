@@ -204,27 +204,44 @@
 				<hr/>
 
 				<div class="newrepo-page-create-tab">
-					<div class="row">
-						<span class="column-elastic">Local Key</span>
-					</div>
-					<ul>
-						<li class="newrepo-page-localkey-item">
-							<div class="row">
-								<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
-								<span class="column newrepo-page-key"></span>
-							</div>
-						</li>
-					</ul>
-
-					<div class="newrepo-page-remotekeys-section" style="display:none">
+					<div class="newrepo-page-localkeys-section">
 						<div class="row">
-							<span class="column-elastic">Remote Keys</span>
+							<span class="column-elastic bold">Local Keys</span>
 						</div>
 						<ul>
-							<li class="newrepo-page-remotekey-item">
+							<li class="newrepo-page-local-key-template" style="display:none">
 								<div class="row">
-									<span class="column material-icons newrepo-page-checkbox">check_box_outline_blank</span>
-									<span class="column newrepo-page-key"></span>
+									<span class="column material-icons">360</span>
+									<span class="column-lefty newrepo-page-localkey-keyid"></span>
+									<button class="column material-icons newrepo-page-localkey-checkbox">check_box_outline_blank</button>
+								</div>
+							</li>
+						</ul>
+					</div>
+					<div class="newrepo-page-remotekeys-section">
+						<div class="row">
+							<span class="column-elastic bold">Remote Keys</span>
+						</div>
+						<ul>
+							<li class="newrepo-page-remote-key-template" style="display:none">
+								<div class="row">
+									<span class="column material-icons">360</span>
+									<span class="column-lefty newrepo-page-remotekey-keyid"></span>
+									<button class="column material-icons newrepo-page-remotekey-checkbox">check_box_outline_blank</button>
+								</div>
+							</li>
+						</ul>
+					</div>
+					<div class="newrepo-page-expiredkeys-section">
+						<div class="row">
+							<span class="column-elastic bold">Expired Keys</span>
+						</div>
+						<ul>
+							<li class="newrepo-page-expired-key-template" style="display:none">
+								<div class="row">
+									<span class="column material-icons">360</span>
+									<span class="column-lefty newrepo-page-expiredkey-keyid"></span>
+									<button class="column material-icons newrepo-page-expiredkey-checkbox" disabled>check_box_outline_blank</button>
 								</div>
 							</li>
 						</ul>
