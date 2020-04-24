@@ -270,7 +270,7 @@ func (g *Keyring) SetTrusted(fingerprint string, trusted bool) error {
 		log.Printf("error: update key trust cmd %v failed with stderr %q", cmd.Args, stderr.String())
 		return xerrors.Errorf("could not update trust status on key %q: %w", fingerprint, err)
 	}
-	log.Printf("trust status for key %q is updated to %b (stdout %q)", fingerprint, trusted, stdout.String())
+	log.Printf("trust status for key %q is updated to %t (stdout %q)", fingerprint, trusted, stdout.String())
 	return nil
 }
 

@@ -87,6 +87,13 @@ func (r *Record) CanEncrypt() bool {
 	return false
 }
 
+func (r *Record) CanDecrypt() bool {
+	if r.IsSecretKey() || r.IsSecretSubkey() {
+		return len(r.fields) >= 15 && strings.ContainsAny(r.fields[14], "+")
+	}
+	return false
+}
+
 func (r *Record) IsExpired() bool {
 	if r.IsPublicKey() || r.IsSubkey() || r.IsSecretKey() || r.IsSecretSubkey() {
 		return len(r.fields) >= 2 && strings.ContainsAny(r.fields[1], "e")

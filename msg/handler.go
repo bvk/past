@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -110,9 +111,12 @@ type CheckStatusResponse struct {
 
 type CreateRepoRequest struct {
 	Fingerprints []string `json:"fingerprints"`
+
+	CheckStatus bool `json:"check_status"`
 }
 
 type CreateRepoResponse struct {
+	CheckStatus *CheckStatusResponse `json:"check_status"`
 }
 
 type ImportRepoRequest struct {
@@ -121,9 +125,12 @@ type ImportRepoRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Path     string `json:"path"`
+
+	CheckStatus bool `json:"check_status"`
 }
 
 type ImportRepoResponse struct {
+	CheckStatus *CheckStatusResponse `json:"check_status"`
 }
 
 type AddRemoteRequest struct {
@@ -132,6 +139,8 @@ type AddRemoteRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Path     string `json:"path"`
+
+	SyncRemote bool `json:"sync_remote"`
 }
 
 type AddRemoteResponse struct {
@@ -157,18 +166,25 @@ type CreateKeyRequest struct {
 	Passphrase string `json:"passphrase"`
 	KeyLength  int    `json:"key_length,string"`
 	KeyYears   int    `json:"key_years,string"`
+
+	CheckStatus bool `json:"check_status"`
 }
 
 type CreateKeyResponse struct {
+	CheckStatus *CheckStatusResponse
 }
 
 type ImportKeyRequest struct {
 	Key string `json:"key"`
+
+	CheckStatus bool `json:"check_status"`
 }
 
 type ImportKeyResponse struct {
 	NewPublicKeys []*gpg.PublicKey
 	NewSecretKeys []*gpg.SecretKey
+
+	CheckStatus *CheckStatusResponse `json:"check_status"`
 }
 
 type EditKeyRequest struct {
@@ -190,9 +206,12 @@ type ExportKeyResponse struct {
 
 type DeleteKeyRequest struct {
 	Fingerprint string `json:"fingerprint"`
+
+	CheckStatus bool `json:"check_status"`
 }
 
 type DeleteKeyResponse struct {
+	CheckStatus *CheckStatusResponse `json:"check_status"`
 }
 
 type ScanStoreRequest struct {
@@ -211,6 +230,7 @@ type ScanStoreResponse struct {
 type AddRecipientRequest struct {
 	NumSkip     int    `json:"num_skip"`
 	Fingerprint string `json:"fingerprint"`
+	ScanStore   bool   `json:"scan_store"`
 }
 
 type AddRecipientResponse struct {
@@ -220,6 +240,7 @@ type AddRecipientResponse struct {
 type RemoveRecipientRequest struct {
 	NumSkip     int    `json:"num_skip"`
 	Fingerprint string `json:"fingerprint"`
+	ScanStore   bool   `json:"scan_store"`
 }
 
 type RemoveRecipientResponse struct {
@@ -238,6 +259,7 @@ type AddFileRequest struct {
 	Password string      `json:"password"`
 	Username string      `json:"username"`
 	Sitename string      `json:"sitename"`
+	Data     string      `json:"data"`
 	Rest     [][2]string `json:"rest"`
 }
 
@@ -305,7 +327,44 @@ func (h *Handler) Serve(ctx context.Context, in io.Reader, out io.Writer) (statu
 		return xerrors.Errorf("could not unmarshal input message: %w", err)
 	}
 
-	var resp BrowserResponse
+	resp, err := h.handleRequest(ctx, req)
+	if err != nil {
+		return xerrors.Errorf("could not handle input request: %w", err)
+	}
+
+	respBytes, err := json.Marshal(&resp)
+	if err != nil {
+		return xerrors.Errorf("could not marshal response (%T) to json: %w", resp, err)
+	}
+	if err := binary.Write(os.Stdout, binary.LittleEndian, uint32(len(respBytes))); err != nil {
+		return xerrors.Errorf("could not write response size: %w", err)
+	}
+	if _, err := os.Stdout.Write(respBytes); err != nil {
+		return xerrors.Errorf("could not write response bytes: %w", err)
+	}
+	return nil
+}
+
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	req := new(BrowserRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, fmt.Sprintf("could not unmarshal input message: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := h.handleRequest(r.Context(), req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not handle input request: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) handleRequest(ctx context.Context, req *BrowserRequest) (_ *BrowserResponse, status error) {
+	resp := new(BrowserResponse)
 	defer func() {
 		if len(resp.Status) > 0 {
 			log.Printf("error: operation has failed with response status: %s", resp.Status)
@@ -407,17 +466,7 @@ func (h *Handler) Serve(ctx context.Context, in io.Reader, out io.Writer) (statu
 		resp.Status = xerrors.Errorf("unknown or invalid request: %w", os.ErrInvalid).Error()
 	}
 
-	respBytes, err := json.Marshal(&resp)
-	if err != nil {
-		return xerrors.Errorf("could not marshal response (%T) to json: %w", resp, err)
-	}
-	if err := binary.Write(os.Stdout, binary.LittleEndian, uint32(len(respBytes))); err != nil {
-		return xerrors.Errorf("could not write response size: %w", err)
-	}
-	if _, err := os.Stdout.Write(respBytes); err != nil {
-		return xerrors.Errorf("could not write response bytes: %w", err)
-	}
-	return nil
+	return resp, nil
 }
 
 func getPublicKeysData(ring *gpg.Keyring) []*past.PublicKeyData {
@@ -447,13 +496,16 @@ func (h *Handler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, re
 	if p, err := exec.LookPath("gpg"); err == nil {
 		resp.GPGPath = p
 	}
-	if h.pstore != nil {
-		resp.PasswordStoreKeys, _ = h.pstore.FileKeys(".")
+	if repo, err := git.NewDir(h.dir); err == nil {
+		h.repo = repo
 	}
 	if h.repo != nil {
 		if addr, err := h.repo.GetRemoteURL("past-remote"); err == nil {
 			resp.Remote = addr
 		}
+	}
+	if ring, err := gpg.NewKeyring(""); err == nil {
+		h.ring = ring
 	}
 	if h.ring != nil {
 		// Identify public keys with the private key and others.
@@ -482,12 +534,26 @@ func (h *Handler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, re
 			}
 		}
 	}
+	if pstore, err := past.New(h.repo, h.ring); err == nil {
+		h.pstore = pstore
+	}
+	if h.pstore != nil {
+		resp.PasswordStoreKeys, _ = h.pstore.FileKeys(".")
+	}
 	return nil
 }
 
 func (h *Handler) doCreateKey(ctx context.Context, req *CreateKeyRequest, resp *CreateKeyResponse) error {
 	if _, err := gpg.Create(req.Name, req.Email, req.Passphrase, req.KeyLength, req.KeyYears); err != nil {
 		return err
+	}
+	if req.CheckStatus {
+		csReq := new(CheckStatusRequest)
+		csResp := new(CheckStatusResponse)
+		if err := h.doCheckStatus(ctx, csReq, csResp); err != nil {
+			return xerrors.Errorf("could not check status after creating the key: %w", err)
+		}
+		resp.CheckStatus = csResp
 	}
 	return nil
 }
@@ -503,6 +569,14 @@ func (h *Handler) doImportKey(ctx context.Context, req *ImportKeyRequest, resp *
 	log.Printf("imported %d new public keys and %d new secret keys", len(pkeys), len(skeys))
 	resp.NewPublicKeys = pkeys
 	resp.NewSecretKeys = skeys
+	if req.CheckStatus {
+		csReq := new(CheckStatusRequest)
+		csResp := new(CheckStatusResponse)
+		if err := h.doCheckStatus(ctx, csReq, csResp); err != nil {
+			return xerrors.Errorf("could not check status after creating the key: %w", err)
+		}
+		resp.CheckStatus = csResp
+	}
 	return nil
 }
 
@@ -547,12 +621,20 @@ func (h *Handler) doDeleteKey(ctx context.Context, req *DeleteKeyRequest, resp *
 			if err := h.ring.DeleteSecretKey(req.Fingerprint); err != nil {
 				return xerrors.Errorf("could not delete secret key %q: %w", req.Fingerprint, err)
 			}
-			log.Printf("secret key for %q is deleted successfully")
+			log.Printf("secret key for %q is deleted successfully", req.Fingerprint)
 			break
 		}
 	}
 	if err := h.ring.Delete(req.Fingerprint); err != nil {
 		return xerrors.Errorf("could not delete key %q: %w", req.Fingerprint, err)
+	}
+	if req.CheckStatus {
+		csReq := new(CheckStatusRequest)
+		csResp := new(CheckStatusResponse)
+		if err := h.doCheckStatus(ctx, csReq, csResp); err != nil {
+			return xerrors.Errorf("could not check status after deleting the key: %w", err)
+		}
+		resp.CheckStatus = csResp
 	}
 	return nil
 }
@@ -828,8 +910,19 @@ func (h *Handler) doAddRecipient(ctx context.Context, req *AddRecipientRequest, 
 		}
 	}
 	keys = append(keys, req.Fingerprint)
-	if err := h.pstore.Reinit(".", keys, req.NumSkip); err != nil {
+	if err := h.pstore.Reinit("", keys, req.NumSkip); err != nil {
 		return xerrors.Errorf("could not reinitialize with a recipient add: %w", err)
+	}
+	// Repo and pstore must be updated.
+	if repo, err := git.NewDir(h.dir); err != nil {
+		return xerrors.Errorf("could not refresh git repo after adding recipient: %w", err)
+	} else {
+		h.repo = repo
+	}
+	if pstore, err := past.New(h.repo, h.ring); err != nil {
+		return xerrors.Errorf("could not refresh past instance after adding recipient: %w", err)
+	} else {
+		h.pstore = pstore
 	}
 	ssReq := new(ScanStoreRequest)
 	ssResp := new(ScanStoreResponse)
@@ -858,8 +951,20 @@ func (h *Handler) doRemoveRecipient(ctx context.Context, req *RemoveRecipientReq
 	if len(newKeys) == len(keys) {
 		return xerrors.Errorf("key %q is not a recipient: %w", req.Fingerprint, os.ErrExist)
 	}
-	if err := h.pstore.Reinit(".", newKeys, req.NumSkip); err != nil {
+	// TODO: We should add support for directories.
+	if err := h.pstore.Reinit("", newKeys, req.NumSkip); err != nil {
 		return xerrors.Errorf("could not reinitialize with a recipient removed: %w", err)
+	}
+	// Repo and pstore must be updated.
+	if repo, err := git.NewDir(h.dir); err != nil {
+		return xerrors.Errorf("could not refresh git repo after adding recipient: %w", err)
+	} else {
+		h.repo = repo
+	}
+	if pstore, err := past.New(h.repo, h.ring); err != nil {
+		return xerrors.Errorf("could not refresh past instance after adding recipient: %w", err)
+	} else {
+		h.pstore = pstore
 	}
 	ssReq := new(ScanStoreRequest)
 	ssResp := new(ScanStoreResponse)

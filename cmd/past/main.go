@@ -11,9 +11,10 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/bvk/past/msg"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
+
+	"github.com/bvk/past/msg"
 )
 
 func main() {
@@ -49,6 +50,7 @@ func doMain(ctx context.Context) error {
 	mainCmd.AddCommand(showCmd)
 	mainCmd.AddCommand(installCmd)
 	mainCmd.AddCommand(importCmd)
+	mainCmd.AddCommand(serveCmd)
 
 	mainCmd.SilenceUsage = true
 	mainCmd.SilenceErrors = true
@@ -76,6 +78,8 @@ func runExtensionCmd(dataDir string) (status error) {
 			log.Printf("%s: %s", e, debug.Stack())
 		}
 	}()
+
+	log.Println("running extension command")
 
 	// When invoked by chrome, PATH may not be the same, so fix it to a known
 	// good defaults. For example, gpg command from GPGTools package in Mac OS X

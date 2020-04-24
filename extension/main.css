@@ -4,7 +4,9 @@ body {
 		background: lightgray;
 		min-width: 20em;
 }
-
+hr {
+		height: 2px;
+}
 ul {
   list-style-type: none;
   margin: 0;

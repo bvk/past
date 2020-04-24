@@ -356,7 +356,7 @@ func (ps *PasswordStore) Reinit(directory string, fingerprints []string, nskip i
 				continue
 			}
 			fileDir := filepath.Clean(filepath.Join(ps.store.RootDir(), filepath.Dir(file)))
-			if fileDir != dirPath {
+			if len(directory) > 0 && fileDir != dirPath {
 				log.Printf("file %q is skipped cause it is not in the directory %q", file, directory)
 				continue
 			}
