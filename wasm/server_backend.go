@@ -31,7 +31,7 @@ func NewServerBackend(href string) (*ServerBackend, error) {
 	return s, nil
 }
 
-func (s *ServerBackend) Call(req *msg.BrowserRequest) (*msg.BrowserResponse, error) {
+func (s *ServerBackend) Call(req *msg.Request) (*msg.Response, error) {
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(req); err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *ServerBackend) Call(req *msg.BrowserRequest) (*msg.BrowserResponse, err
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	response := new(msg.BrowserResponse)
+	response := new(msg.Response)
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
 		return nil, err
 	}

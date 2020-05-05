@@ -37,7 +37,7 @@ func New(dataDir string) (_ *Handler, status error) {
 	return h, nil
 }
 
-type BrowserRequest struct {
+type Request struct {
 	CheckStatus *CheckStatusRequest `json:"check_status"`
 
 	CreateKey *CreateKeyRequest `json:"create_key"`
@@ -63,7 +63,7 @@ type BrowserRequest struct {
 	DeleteFile *DeleteFileRequest `json:"delete_file"`
 }
 
-type BrowserResponse struct {
+type Response struct {
 	// Status contains any error in performing the operation. It should be empty
 	// on success.
 	Status string `json:"status"`
@@ -322,7 +322,7 @@ func (h *Handler) Serve(ctx context.Context, in io.Reader, out io.Writer) (statu
 		return xerrors.Errorf("could not read input message: %w", err)
 	}
 
-	req := new(BrowserRequest)
+	req := new(Request)
 	if err := json.Unmarshal(reqBuf, req); err != nil {
 		return xerrors.Errorf("could not unmarshal input message: %w", err)
 	}
@@ -348,7 +348,7 @@ func (h *Handler) Serve(ctx context.Context, in io.Reader, out io.Writer) (statu
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	req := new(BrowserRequest)
+	req := new(Request)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, fmt.Sprintf("could not unmarshal input message: %v", err), http.StatusInternalServerError)
 		return
@@ -363,8 +363,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-func (h *Handler) handleRequest(ctx context.Context, req *BrowserRequest) (_ *BrowserResponse, status error) {
-	resp := new(BrowserResponse)
+func (h *Handler) handleRequest(ctx context.Context, req *Request) (_ *Response, status error) {
+	resp := new(Response)
 	defer func() {
 		if len(resp.Status) > 0 {
 			log.Printf("error: operation has failed with response status: %s", resp.Status)

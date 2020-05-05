@@ -28,7 +28,7 @@ func NewExtensionBackend() (*ExtensionBackend, error) {
 	return e, nil
 }
 
-func (e *ExtensionBackend) Call(req *msg.BrowserRequest) (*msg.BrowserResponse, error) {
+func (e *ExtensionBackend) Call(req *msg.Request) (*msg.Response, error) {
 	var in bytes.Buffer
 	if err := json.NewEncoder(&in).Encode(req); err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (e *ExtensionBackend) Call(req *msg.BrowserRequest) (*msg.BrowserResponse, 
 	if result == js.Null() || result == js.Undefined() {
 		return nil, xerrors.Errorf("could not call the native messaging host backend: %w", os.ErrInvalid)
 	}
-	resp := new(msg.BrowserResponse)
+	resp := new(msg.Response)
 	if err := js2go(result, resp); err != nil {
 		return nil, xerrors.Errorf("could not decode the native messaging host response: %w", err)
 	}

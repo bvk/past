@@ -72,7 +72,7 @@ const settingsTemplate = `
 type SettingsPage struct {
 	ctl *Controller
 
-	args *msg.BrowserResponse
+	args *msg.Response
 
 	root dom.Element
 
@@ -85,7 +85,7 @@ type SettingsPage struct {
 	MessagingIcon, ToolsIcon, KeysIcon, RepoIcon, RemoteIcon *dom.HTMLSpanElement
 }
 
-func NewSettingsPage(ctl *Controller, resp *msg.BrowserResponse) (*SettingsPage, error) {
+func NewSettingsPage(ctl *Controller, resp *msg.Response) (*SettingsPage, error) {
 	p := new(SettingsPage)
 	root, err := BindHTML(settingsTemplate, "gotag", p)
 	if err != nil {

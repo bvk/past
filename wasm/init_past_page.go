@@ -318,7 +318,7 @@ func (p *InitPastPage) OnDoneButton(dom.Event) (status error) {
 		checkStatus = resp.CheckStatus
 	}
 
-	params := &msg.BrowserResponse{
+	params := &msg.Response{
 		CheckStatus: checkStatus,
 	}
 	page, err := NewSettingsPage(p.ctl, params)

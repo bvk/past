@@ -25,7 +25,7 @@ type Page interface {
 
 type Backend interface {
 	ActiveTabAddr() string
-	Call(*msg.BrowserRequest) (*msg.BrowserResponse, error)
+	Call(*msg.Request) (*msg.Response, error)
 }
 
 type Browser interface {
@@ -125,15 +125,15 @@ func (c *Controller) UseCountMap() map[string]int {
 	return c.state.UseCount
 }
 
-func (c *Controller) CheckStatus() (*msg.BrowserResponse, error) {
-	req := msg.BrowserRequest{
+func (c *Controller) CheckStatus() (*msg.Response, error) {
+	req := msg.Request{
 		CheckStatus: new(msg.CheckStatusRequest),
 	}
 	return c.backend.Call(&req)
 }
 
 func (c *Controller) PasswordStoreStatus() (*msg.ScanStoreResponse, error) {
-	req := msg.BrowserRequest{
+	req := msg.Request{
 		ScanStore: new(msg.ScanStoreRequest),
 	}
 	resp, err := c.backend.Call(&req)
@@ -144,7 +144,7 @@ func (c *Controller) PasswordStoreStatus() (*msg.ScanStoreResponse, error) {
 }
 
 func (c *Controller) RemoteStatus() (*msg.SyncRemoteResponse, error) {
-	req := msg.BrowserRequest{
+	req := msg.Request{
 		SyncRemote: new(msg.SyncRemoteRequest),
 	}
 	resp, err := c.backend.Call(&req)
@@ -155,7 +155,7 @@ func (c *Controller) RemoteStatus() (*msg.SyncRemoteResponse, error) {
 }
 
 func (c *Controller) SyncRemote() (*msg.SyncRemoteResponse, error) {
-	req := msg.BrowserRequest{
+	req := msg.Request{
 		SyncRemote: new(msg.SyncRemoteRequest),
 	}
 	resp, err := c.backend.Call(&req)
@@ -166,7 +166,7 @@ func (c *Controller) SyncRemote() (*msg.SyncRemoteResponse, error) {
 }
 
 func (c *Controller) PullRemote() (*msg.SyncRemoteResponse, error) {
-	req := msg.BrowserRequest{
+	req := msg.Request{
 		SyncRemote: &msg.SyncRemoteRequest{
 			Pull: true,
 		},
@@ -179,7 +179,7 @@ func (c *Controller) PullRemote() (*msg.SyncRemoteResponse, error) {
 }
 
 func (c *Controller) PushRemote() (*msg.SyncRemoteResponse, error) {
-	req := msg.BrowserRequest{
+	req := msg.Request{
 		SyncRemote: &msg.SyncRemoteRequest{
 			Push: true,
 		},
@@ -192,7 +192,7 @@ func (c *Controller) PushRemote() (*msg.SyncRemoteResponse, error) {
 }
 
 func (c *Controller) ImportKey(req *msg.ImportKeyRequest) (*msg.ImportKeyResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{ImportKey: req})
+	resp, err := c.backend.Call(&msg.Request{ImportKey: req})
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (c *Controller) ImportKey(req *msg.ImportKeyRequest) (*msg.ImportKeyRespons
 }
 
 func (c *Controller) CreateKey(req *msg.CreateKeyRequest) (*msg.CreateKeyResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{CreateKey: req})
+	resp, err := c.backend.Call(&msg.Request{CreateKey: req})
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (c *Controller) CreateKey(req *msg.CreateKeyRequest) (*msg.CreateKeyRespons
 }
 
 func (c *Controller) EditKey(req *msg.EditKeyRequest) (*msg.EditKeyResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{EditKey: req})
+	resp, err := c.backend.Call(&msg.Request{EditKey: req})
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (c *Controller) EditKey(req *msg.EditKeyRequest) (*msg.EditKeyResponse, err
 }
 
 func (c *Controller) ExportKey(req *msg.ExportKeyRequest) (*msg.ExportKeyResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{ExportKey: req})
+	resp, err := c.backend.Call(&msg.Request{ExportKey: req})
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (c *Controller) ExportKey(req *msg.ExportKeyRequest) (*msg.ExportKeyRespons
 }
 
 func (c *Controller) DeleteKey(req *msg.DeleteKeyRequest) (*msg.DeleteKeyResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{DeleteKey: req})
+	resp, err := c.backend.Call(&msg.Request{DeleteKey: req})
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func (c *Controller) DeleteKey(req *msg.DeleteKeyRequest) (*msg.DeleteKeyRespons
 }
 
 func (c *Controller) CreateRepo(req *msg.CreateRepoRequest) (*msg.CreateRepoResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{CreateRepo: req})
+	resp, err := c.backend.Call(&msg.Request{CreateRepo: req})
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (c *Controller) CreateRepo(req *msg.CreateRepoRequest) (*msg.CreateRepoResp
 }
 
 func (c *Controller) ImportRepo(req *msg.ImportRepoRequest) (*msg.ImportRepoResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{ImportRepo: req})
+	resp, err := c.backend.Call(&msg.Request{ImportRepo: req})
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +248,7 @@ func (c *Controller) ImportRepo(req *msg.ImportRepoRequest) (*msg.ImportRepoResp
 }
 
 func (c *Controller) AddRecipient(req *msg.AddRecipientRequest) (*msg.AddRecipientResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{AddRecipient: req})
+	resp, err := c.backend.Call(&msg.Request{AddRecipient: req})
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (c *Controller) AddRecipient(req *msg.AddRecipientRequest) (*msg.AddRecipie
 }
 
 func (c *Controller) RemoveRecipient(req *msg.RemoveRecipientRequest) (*msg.RemoveRecipientResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{RemoveRecipient: req})
+	resp, err := c.backend.Call(&msg.Request{RemoveRecipient: req})
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (c *Controller) RemoveRecipient(req *msg.RemoveRecipientRequest) (*msg.Remo
 }
 
 func (c *Controller) AddRemote(req *msg.AddRemoteRequest) (*msg.AddRemoteResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{AddRemote: req})
+	resp, err := c.backend.Call(&msg.Request{AddRemote: req})
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (c *Controller) AddRemote(req *msg.AddRemoteRequest) (*msg.AddRemoteRespons
 }
 
 func (c *Controller) ListFiles() (*msg.ListFilesResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{ListFiles: new(msg.ListFilesRequest)})
+	resp, err := c.backend.Call(&msg.Request{ListFiles: new(msg.ListFilesRequest)})
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (c *Controller) ListFiles() (*msg.ListFilesResponse, error) {
 }
 
 func (c *Controller) AddFile(req *msg.AddFileRequest) (*msg.AddFileResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{AddFile: req})
+	resp, err := c.backend.Call(&msg.Request{AddFile: req})
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (c *Controller) AddFile(req *msg.AddFileRequest) (*msg.AddFileResponse, err
 }
 
 func (c *Controller) ViewFile(req *msg.ViewFileRequest) (*msg.ViewFileResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{ViewFile: req})
+	resp, err := c.backend.Call(&msg.Request{ViewFile: req})
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +296,7 @@ func (c *Controller) ViewFile(req *msg.ViewFileRequest) (*msg.ViewFileResponse, 
 }
 
 func (c *Controller) EditFile(req *msg.EditFileRequest) (*msg.EditFileResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{EditFile: req})
+	resp, err := c.backend.Call(&msg.Request{EditFile: req})
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (c *Controller) EditFile(req *msg.EditFileRequest) (*msg.EditFileResponse, 
 }
 
 func (c *Controller) DeleteFile(req *msg.DeleteFileRequest) (*msg.DeleteFileResponse, error) {
-	resp, err := c.backend.Call(&msg.BrowserRequest{DeleteFile: req})
+	resp, err := c.backend.Call(&msg.Request{DeleteFile: req})
 	if err != nil {
 		return nil, err
 	}
