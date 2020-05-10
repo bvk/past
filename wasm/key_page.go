@@ -112,7 +112,7 @@ func (p *KeyPage) RefreshDisplay() error {
 }
 
 func (p *KeyPage) OnBackButton(dom.Event) (status error) {
-	resp, err := p.ctl.CheckStatus()
+	resp, err := p.ctl.CheckStatus(new(msg.CheckStatusRequest))
 	if err != nil {
 		return p.ctl.setError(err)
 	}

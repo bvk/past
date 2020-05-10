@@ -136,7 +136,7 @@ func (p *RemotePage) RefreshDisplay() error {
 }
 
 func (p *RemotePage) OnBackButton(dom.Event) (status error) {
-	resp, err := p.ctl.CheckStatus()
+	resp, err := p.ctl.CheckStatus(new(msg.CheckStatusRequest))
 	if err != nil {
 		return p.ctl.setError(err)
 	}

@@ -199,7 +199,7 @@ func (p *AddKeyPage) isCreateEmpty() bool {
 }
 
 func (p *AddKeyPage) OnBackButton(dom.Event) (status error) {
-	resp, err := p.ctl.CheckStatus()
+	resp, err := p.ctl.CheckStatus(new(msg.CheckStatusRequest))
 	if err != nil {
 		return p.ctl.setError(err)
 	}

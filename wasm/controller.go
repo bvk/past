@@ -34,7 +34,8 @@ type Browser interface {
 }
 
 type State struct {
-	UseCount map[string]int
+	UseCountMap map[string]int
+	MenuIDMap   map[string]string
 }
 
 type Controller struct {
@@ -76,12 +77,23 @@ func NewController(backend Backend) (*Controller, error) {
 	return c, nil
 }
 
+func (c *Controller) getStorage() StorageSupport {
+	if s, ok := c.backend.(StorageSupport); ok {
+		return s
+	}
+	return storage.Local()
+}
+
 func (c *Controller) getState() (*State, error) {
-	local := storage.Local()
-	data, ok := local.GetItem("past")
+	storage := c.getStorage()
+	data, ok := storage.GetItem("past")
 	if !ok {
 		log.Println("found no persistent state saved previously")
-		return new(State), nil
+		s := &State{
+			UseCountMap: make(map[string]int),
+			MenuIDMap:   make(map[string]string),
+		}
+		return s, nil
 	}
 	state := new(State)
 	if err := json.NewDecoder(strings.NewReader(data)).Decode(state); err != nil {
@@ -91,18 +103,41 @@ func (c *Controller) getState() (*State, error) {
 	return state, nil
 }
 
+func (c *Controller) UseCountMap() map[string]int {
+	return c.state.UseCountMap
+}
+
 func (c *Controller) UpdateUseCount(useMap map[string]int) error {
 	dupMap := make(map[string]int)
 	for k, v := range useMap {
 		dupMap[k] = v
 	}
-	c.state.UseCount = dupMap
+	c.state.UseCountMap = dupMap
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(c.state); err != nil {
 		return xerrors.Errorf("could not encode persistent state: %w", err)
 	}
-	local := storage.Local()
-	local.SetItem("past", b.String())
+	storage := c.getStorage()
+	storage.SetItem("past", b.String())
+	return nil
+}
+
+func (c *Controller) MenuIDMap() map[string]string {
+	return c.state.MenuIDMap
+}
+
+func (c *Controller) UpdateMenuIDMap(menuMap map[string]string) error {
+	dupMap := make(map[string]string)
+	for k, v := range menuMap {
+		dupMap[k] = v
+	}
+	c.state.MenuIDMap = dupMap
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(c.state); err != nil {
+		return xerrors.Errorf("could not encode persistent state: %w", err)
+	}
+	storage := c.getStorage()
+	storage.SetItem("past", b.String())
 	return nil
 }
 
@@ -121,15 +156,25 @@ func (c *Controller) ShowPage(page Page) error {
 	return nil
 }
 
-func (c *Controller) UseCountMap() map[string]int {
-	return c.state.UseCount
+func (c *Controller) ShowAllPages(pages []Page) error {
+	child := c.body.FirstChild()
+	c.body.Style().SetProperty("display", "flex", "")
+	c.body.Style().SetProperty("flex-wrap", "wrap", "")
+	for _, page := range pages {
+		if err := page.RefreshDisplay(); err != nil {
+			return err
+		}
+		div := page.RootDiv().(*dom.HTMLDivElement)
+		div.Style().SetProperty("border", "1px solid black", "")
+		div.Style().SetProperty("margin", "1em", "")
+		div.Style().SetProperty("width", "40em", "")
+		child.ParentNode().InsertBefore(page.RootDiv(), child.NextSibling())
+	}
+	return nil
 }
 
-func (c *Controller) CheckStatus() (*msg.Response, error) {
-	req := msg.Request{
-		CheckStatus: new(msg.CheckStatusRequest),
-	}
-	return c.backend.Call(&req)
+func (c *Controller) CheckStatus(req *msg.CheckStatusRequest) (*msg.Response, error) {
+	return c.backend.Call(&msg.Request{CheckStatus: req})
 }
 
 func (c *Controller) PasswordStoreStatus() (*msg.ScanStoreResponse, error) {

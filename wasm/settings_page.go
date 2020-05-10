@@ -96,7 +96,7 @@ func NewSettingsPage(ctl *Controller, resp *msg.Response) (*SettingsPage, error)
 }
 
 func ShowSettingsPage(ctl *Controller) (*SettingsPage, error) {
-	resp, err := ctl.CheckStatus()
+	resp, err := ctl.CheckStatus(new(msg.CheckStatusRequest))
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func (p *SettingsPage) OnRemoteButton(dom.Event) (status error) {
 }
 
 func (p *SettingsPage) OnCheckButton(dom.Event) (status error) {
-	check, err := p.ctl.CheckStatus()
+	check, err := p.ctl.CheckStatus(&msg.CheckStatusRequest{ListFiles: true})
 	if err != nil {
 		return p.ctl.setError(err)
 	}

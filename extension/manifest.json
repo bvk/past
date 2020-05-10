@@ -30,6 +30,8 @@
   "permissions": [
     "nativeMessaging",
     "storage",
-    "tabs"
+    "tabs",
+    "contextMenus",
+    "https://*/*"
   ]
 }
