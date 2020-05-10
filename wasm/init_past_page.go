@@ -232,7 +232,7 @@ func (p *InitPastPage) RefreshDisplay() error {
 	type Tab struct {
 		name   string
 		button *dom.HTMLButtonElement
-		tab    dom.Element
+		tab    *dom.HTMLDivElement
 	}
 	var tabs = []Tab{
 		{"create-tab", p.CreateButton, p.CreateTab},
@@ -241,10 +241,10 @@ func (p *InitPastPage) RefreshDisplay() error {
 	for _, tab := range tabs {
 		if tab.name == p.currentTab {
 			tab.button.Style().SetProperty("background", "gray", "")
-			tab.button.Style().RemoveProperty("display")
+			tab.tab.Style().RemoveProperty("display")
 		} else {
 			tab.button.Style().SetProperty("background", "transparent", "")
-			tab.button.Style().SetProperty("display", "none", "")
+			tab.tab.Style().SetProperty("display", "none", "")
 		}
 	}
 	return p.RefreshButtons(nil)
