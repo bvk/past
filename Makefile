@@ -34,6 +34,7 @@ $(BUILD_DIR):
 .PHONY: go-wasm-all
 go-wasm-all:
 	GOOS=js GOARCH=wasm $(GO) build -o $(CURDIR)/extension/main.wasm github.com/bvk/past/wasm
+	cp $(shell $(GO) env GOROOT)/misc/wasm/wasm_exec.js $(CURDIR)/extension/wasm_exec.js
 
 .PHONY: go-generate
 go-generate: go-wasm-all
