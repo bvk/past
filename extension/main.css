@@ -1,8 +1,22 @@
+html {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		box-sizing: border-box;
+		font-size: 12pt;
+}
+*, *:before, *:after {
+		box-sizing: inherit;
+}
 body {
 		line-height: 1.6;
-		font-size: 12pt;
 		background: lightgray;
-		min-width: 20em;
+		border: 1px solid red;
+
+		margin: 0rem;
+		padding: 0.25rem;
+		height: 100%;
+		width: 100%;
 }
 hr {
 		height: 2px;
@@ -12,7 +26,6 @@ ul {
   margin: 0;
   padding: 0;
 }
-
 li {
 		background: gainsboro;
 }
@@ -21,15 +34,15 @@ li:nth-child(even) {
 }
 
 input {
-		margin: 0.5em;
-		padding: 0.2em;
+		margin: 0.5rem;
+		padding: 0.2rem;
 		line-height: 1.6;
 		font-family: inherit;
 }
 
 select {
 		-webkit-appearance: none;
-		padding: 0.2em;
+		padding: 0.2rem;
 		text-align-last: center;
 		font-family: inherit;
 }
@@ -54,7 +67,7 @@ button:not(:disabled):hover {
 }
 
 .material-icons {
-		padding: 0.2em;
+		padding: 0.2rem;
 }
 
 .row {
@@ -62,6 +75,7 @@ button:not(:disabled):hover {
 		flex-direction: row;
 		flex-wrap: nowrap;
 		align-items: center;
+		width: 100%;
 }
 
 .vrow {
@@ -69,6 +83,8 @@ button:not(:disabled):hover {
 		flex-direction: column;
 		flex-wrap: nowrap;
 		align-items: center;
+		height: 100%;
+		box-sizing: border-box;
 }
 
 .vrow-lefty {
@@ -85,31 +101,59 @@ button:not(:disabled):hover {
 		align-items: right;
 }
 
+.cell {
+    white-space: nowrap;
+}
+
+.cell-elastic {
+		flex-grow: 1;
+}
+
+.cell-righty {
+		flex-grow: 1;
+		text-align: right;
+}
+
+.cell-lefty {
+		flex-grow: 1;
+		text-align: left;
+}
+
+.cell-topy {
+		flex-grow: 1;
+		vertical-align: top;
+}
+
+.cell-boty {
+		flex-grow: 1;
+		vertical-align: bottom;
+}
+
 .column {
-		margin: 0.2em;
+		margin: 0.2rem;
     white-space: nowrap;
 }
 
 .column-elastic {
 		flex-grow: 1;
-		margin: 0.2em;
+		margin: 0.2rem;
 }
 
 .column-righty {
 		flex-grow: 1;
-		margin: 0.2em;
+		margin: 0.2rem;
 		text-align: right;
 }
 
 .column-lefty {
 		flex-grow: 1;
-		margin: 0.2em;
+		margin: 0.2rem;
 		text-align: left;
 }
 
 .header {
-		margin: 0.2em;
-		padding: 0.2em;
+		margin: 0.2rem;
+		padding: 0.2rem;
 }
 
 .header-title {
@@ -119,14 +163,14 @@ button:not(:disabled):hover {
 }
 
 .content {
-		margin: 0.2em;
-		padding: 0.2em;
+		margin: 0.2rem;
+		padding: 0.2rem;
 }
 
 .footer {
-		margin: 0.2em;
-		padding: 0.2em;
-		min-height: 2em;
+		margin: 0.2rem;
+		padding: 0.2rem;
+		min-height: 2rem;
 }
 
 .footer-status {
@@ -134,59 +178,59 @@ button:not(:disabled):hover {
 }
 
 .password-element {
-		width: 8em;
+		width: 8rem;
 }
 
 .w4em {
-		width: 4em;
+		width: 4rem;
 }
 
 .w6em {
-		width: 6em;
+		width: 6rem;
 }
 
 .w8em {
-		width: 8em;
+		width: 8rem;
 }
 
 .w10em {
-		width: 10em;
+		width: 10rem;
 }
 
 .w20em {
-		width: 20em;
+		width: 20rem;
 }
 
 .w25em {
-		width: 25em;
+		width: 25rem;
 }
 
 .w40em {
-		width: 40em;
+		width: 40rem;
 }
 
 .mw20em {
-		min-width: 20em;
+		min-width: 20rem;
 }
 
 .mw25em {
-		min-width: 25em;
+		min-width: 25rem;
 }
 
 .mw32em {
-		min-width: 32em;
+		min-width: 32rem;
 }
 
 .mw40em {
-		min-width: 40em;
+		min-width: 40rem;
 }
 
 .h4em {
-		height: 4em;
+		height: 4rem;
 }
 
 .h25em {
-		height: 25em;
+		height: 25rem;
 }
 
 .hidden {
@@ -203,8 +247,4 @@ button:not(:disabled):hover {
 
 .nowrap {
     white-space: nowrap;
-}
-
-.disabled {
-		color: rgb(84,84,84);
 }
