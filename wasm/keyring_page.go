@@ -18,6 +18,8 @@ const keyringTemplate = `
 		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
+  <hr />
+
 	<div class="content mw32em">
 		<div class="row">
 			<span class="column-elastic bold nowrap">Local Keys (with Private Key)</span>
