@@ -4,6 +4,7 @@ html {
 		overflow: hidden;
 		box-sizing: border-box;
 		font-size: 12pt;
+		font-family: sans-serif;
 }
 *, *:before, *:after {
 		box-sizing: inherit;
@@ -27,6 +28,9 @@ ul {
   padding: 0;
 }
 li {
+  padding: 0.25em;
+}
+li:nth-child(odd) {
 		background: gainsboro;
 }
 li:nth-child(even) {
