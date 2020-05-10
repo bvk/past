@@ -18,7 +18,7 @@ import (
 const searchTemplate = `
 <div>
 	<div class="row header">
-		<input class="column-elastic" gotag="name:SearchBar input:OnSearchBar" type="text" placeholder="What are you looking for?"></input>
+		<input class="cell-elastic" gotag="name:SearchBar input:OnSearchBar" type="text" placeholder="What are you looking for?"></input>
 	</div>
 
 	<hr/>
@@ -27,18 +27,18 @@ const searchTemplate = `
 		<ul>
 			<li gotag="name:SearchItemTemplate" style="display:none">
 				<div class="row">
-					<span class="column-elastic" searchitem="name:PasswordName"></span>
-					<button class="column material-icons" searchitem="name:CopyButton click:OnCopyButton">content_copy</button>
-					<button class="column material-icons" searchitem="name:ViewButton click:OnViewButton">navigate_next</button>
+					<span class="cell-elastic" searchitem="name:PasswordName"></span>
+					<button class="cell material-icons" searchitem="name:CopyButton click:OnCopyButton">content_copy</button>
+					<button class="cell material-icons" searchitem="name:ViewButton click:OnViewButton">navigate_next</button>
 				</div>
 			</li>
 		</ul>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:SettingsButton click:OnSettingsButton">tune</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:AddButton click:OnAddButton">add</button>
+		<button class="cell material-icons" gotag="name:SettingsButton click:OnSettingsButton">tune</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:AddButton click:OnAddButton">add</button>
 	</div>
 </div>
 `

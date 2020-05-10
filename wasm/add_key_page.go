@@ -14,19 +14,19 @@ import (
 const addKeyTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">Add Encryption Keys</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">Add Encryption Keys</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<div class="content mw32em">
 		<div class="row tab-bar">
-			<button class="column-elastic" gotag="name:CreateTabButton click:OnCreateTabButton">
+			<button class="cell-elastic" gotag="name:CreateTabButton click:OnCreateTabButton">
 				<span class="button-text material-icons">create_new_folder</span>
 				<span class="button-text">Create</span>
 			</button>
 
-			<button class="column-elastic" gotag="name:ImportTabButton click:OnImportTabButton">
+			<button class="cell-elastic" gotag="name:ImportTabButton click:OnImportTabButton">
 				<span class="button-text material-icons">cloud_download</span>
 				<span class="button-text">Import</span>
 			</button>
@@ -36,23 +36,23 @@ const addKeyTemplate = `
 
 		<div gotag="name:CreateTab">
 			<div class="row">
-				<span class="column w6em">User Name</span>
-				<input class="column-elastic" gotag="name:UserName input:RefreshButtons"></input>
+				<span class="cell w6em">User Name</span>
+				<input class="cell-elastic" gotag="name:UserName input:RefreshButtons"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">User Email</span>
-				<input class="column-elastic" gotag="name:UserEmail input:RefreshButtons"></input>
+				<span class="cell w6em">User Email</span>
+				<input class="cell-elastic" gotag="name:UserEmail input:RefreshButtons"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Key Options</span>
-				<select class="column-elastic" gotag="name:KeyLength change:RefreshButtons">
+				<span class="cell w6em">Key Options</span>
+				<select class="cell-elastic" gotag="name:KeyLength change:RefreshButtons">
 					<option value="4096">4096 Bits</option>
 					<option value="2048">2048 Bits</option>
 					<option value="1024">1024 Bits</option>
 				</select>
-				<select class="column-elastic" gotag="name:KeyYears change:RefreshButtons">
+				<select class="cell-elastic" gotag="name:KeyYears change:RefreshButtons">
 					<option value="0">Doesn't Expire</option>
 					<option value="1">1 Year</option>
 					<option value="2">2 Years</option>
@@ -64,25 +64,25 @@ const addKeyTemplate = `
 			</div>
 
 			<div class="row">
-				<span class="column-elastic">Passphrase</span>
+				<span class="cell-elastic">Passphrase</span>
 			</div>
 
 			<div class="row">
-				<input class="column-elastic w4em" type="password" gotag="name:Passphrase input:RefreshButtons"></input>
-				<input class="column-elastic w4em" type="password" gotag="name:RepeatPassphrase input:RefreshButtons"></input>
-				<button class="column material-icons" gotag="name:ToggleButton click:OnToggleButton">visibility_off</button>
+				<input class="cell-elastic w4em" type="password" gotag="name:Passphrase input:RefreshButtons"></input>
+				<input class="cell-elastic w4em" type="password" gotag="name:RepeatPassphrase input:RefreshButtons"></input>
+				<button class="cell material-icons" gotag="name:ToggleButton click:OnToggleButton">visibility_off</button>
 			</div>
 		</div>
 
 		<div class="row" gotag="name:ImportTab">
-			<textarea class="column-elastic h25em" gotag="name:KeyData input:RefreshButtons"></textarea>
+			<textarea class="cell-elastic h25em" gotag="name:KeyData input:RefreshButtons"></textarea>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" disabled gotag="name:UndoButton click:OnUndoButton">undo</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" disabled gotag="name:DoneButton click:OnDoneButton">done</button>
+		<button class="cell material-icons" disabled gotag="name:UndoButton click:OnUndoButton">undo</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" disabled gotag="name:DoneButton click:OnDoneButton">done</button>
 	</div>
 </div>
 `

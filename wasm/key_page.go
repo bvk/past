@@ -16,35 +16,35 @@ import (
 const keyTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">GPG Key Details</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">GPG Key Details</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column-lefty" gotag="name:KeyFingerprint"></span>
-			<button class="column material-icons" gotag="name:CopyButton click:OnCopyButton">content_copy</button>
+			<span class="cell-lefty" gotag="name:KeyFingerprint"></span>
+			<button class="cell material-icons" gotag="name:CopyButton click:OnCopyButton">content_copy</button>
 		</div>
 
 		<div class="row">
-			<span class="column-lefty" gotag="name:KeyUserName"></span>
-			<span class="column-righty" gotag="name:KeyTrusted"></span>
-			<button class="column material-icons" gotag="name:ToggleTrust click:OnToggleTrust">check_circle_outline</button>
+			<span class="cell-lefty" gotag="name:KeyUserName"></span>
+			<span class="cell-righty" gotag="name:KeyTrusted"></span>
+			<button class="cell material-icons" gotag="name:ToggleTrust click:OnToggleTrust">check_circle_outline</button>
 		</div>
 
 		<div class="row">
-			<span class="column-lefty" gotag="name:KeyUserEmail"></span>
-			<span class="column-righty" gotag="name:KeyExpired"></span>
+			<span class="cell-lefty" gotag="name:KeyUserEmail"></span>
+			<span class="cell-righty" gotag="name:KeyExpired"></span>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:ExportButton click:OnExportButton">file_copy</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:DeleteButton click:OnDeleteButton">delete</button>
+		<button class="cell material-icons" gotag="name:ExportButton click:OnExportButton">file_copy</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:DeleteButton click:OnDeleteButton">delete</button>
 	</div>
 </div>
 `

@@ -15,18 +15,18 @@ import (
 const initPastTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">New Password Store</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">New Password Store</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<div class="content mw32em">
 		<div class="row tab-bar">
-			<button class="column-elastic" gotag="name:ImportButton click:OnImportButton">
+			<button class="cell-elastic" gotag="name:ImportButton click:OnImportButton">
 				<span class="button-text material-icons">cloud_download</span>
 				<span class="button-text">Import</span>
 			</button>
-			<button class="column-elastic" gotag="name:CreateButton click:OnCreateButton">
+			<button class="cell-elastic" gotag="name:CreateButton click:OnCreateButton">
 				<span class="button-text material-icons">create_new_folder</span>
 				<span class="button-text">Create</span>
 			</button>
@@ -37,14 +37,14 @@ const initPastTemplate = `
 		<div gotag="name:CreateTab">
 			<div class="localkeys-section">
 				<div class="row">
-					<span class="column-elastic bold">Local Keys</span>
+					<span class="cell-elastic bold">Local Keys</span>
 				</div>
 				<ul>
 					<li gotag="name:LocalKeyTemplate" style="display:none">
 						<div class="row">
-							<span class="column material-icons">360</span>
-							<span class="column-lefty" localkey="name:KeyID click:OnKeyID"></span>
-							<button class="column material-icons" localkey="name:KeyCheckbox click:OnKeyCheckbox">check_box_outline_blank</button>
+							<span class="cell material-icons">360</span>
+							<span class="cell-lefty" localkey="name:KeyID click:OnKeyID"></span>
+							<button class="cell material-icons" localkey="name:KeyCheckbox click:OnKeyCheckbox">check_box_outline_blank</button>
 						</div>
 					</li>
 				</ul>
@@ -52,28 +52,28 @@ const initPastTemplate = `
 
 			<div class="remotekeys-section">
 				<div class="row">
-					<span class="column-elastic bold">Remote Keys</span>
+					<span class="cell-elastic bold">Remote Keys</span>
 				</div>
 				<ul>
 					<li gotag="name:RemoteKeyTemplate" style="display:none">
 						<div class="row">
-							<span class="column material-icons">360</span>
-							<span class="column-lefty" remotekey="name:KeyID click:OnKeyID"></span>
-							<button class="column material-icons" remotekey="name:KeyCheckbox click:OnKeyCheckbox">check_box_outline_blank</button>
+							<span class="cell material-icons">360</span>
+							<span class="cell-lefty" remotekey="name:KeyID click:OnKeyID"></span>
+							<button class="cell material-icons" remotekey="name:KeyCheckbox click:OnKeyCheckbox">check_box_outline_blank</button>
 						</div>
 					</li>
 				</ul>
 			</div>
 			<div class="expiredkeys-section">
 				<div class="row">
-					<span class="column-elastic bold">Expired Keys</span>
+					<span class="cell-elastic bold">Expired Keys</span>
 				</div>
 				<ul>
 					<li gotag="name:ExpiredKeyTemplate" style="display:none">
 						<div class="row">
-							<span class="column material-icons">360</span>
-							<span class="column-lefty" expiredkey="name:KeyID click:OnKeyID"></span>
-							<button class="column material-icons" expiredkey="name:KeyCheckbox click:OnKeyCheckbox" disabled>check_box_outline_blank</button>
+							<span class="cell material-icons">360</span>
+							<span class="cell-lefty" expiredkey="name:KeyID click:OnKeyID"></span>
+							<button class="cell material-icons" expiredkey="name:KeyCheckbox click:OnKeyCheckbox" disabled>check_box_outline_blank</button>
 						</div>
 					</li>
 				</ul>
@@ -82,8 +82,8 @@ const initPastTemplate = `
 
 		<div gotag="name:ImportTab">
 			<div class="row">
-				<span class="column w6em">Provider</span>
-				<select class="column-elastic" gotag="name:GitServer change:RefreshButtons">
+				<span class="cell w6em">Provider</span>
+				<select class="cell-elastic" gotag="name:GitServer change:RefreshButtons">
 					<optgroup>
 						<option value="ssh">Custom Server using SSH protocol</option>
 						<option value="https">Custom Server using HTTPS protocol</option>
@@ -97,24 +97,24 @@ const initPastTemplate = `
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Username</span>
-				<input class="column-elastic" gotag="name:GitUser input:RefreshButtons" placeholder="username"></input>
+				<span class="cell w6em">Username</span>
+				<input class="cell-elastic" gotag="name:GitUser input:RefreshButtons" placeholder="username"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Password</span>
-				<input class="column-elastic" gotag="name:GitPass input:RefreshButtons" type="password" placeholder="leave empty for password-less authentication"></input>
-				<button class="column material-icons" gotag="name:ToggleGitPassButton click:OnToggleGitPass">visibility_off</button>
+				<span class="cell w6em">Password</span>
+				<input class="cell-elastic" gotag="name:GitPass input:RefreshButtons" type="password" placeholder="leave empty for password-less authentication"></input>
+				<button class="cell material-icons" gotag="name:ToggleGitPassButton click:OnToggleGitPass">visibility_off</button>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Hostname</span>
-				<input class="column-elastic" gotag="name:GitHost input:RefreshButtons" placeholder="hostname.com:1234"></input>
+				<span class="cell w6em">Hostname</span>
+				<input class="cell-elastic" gotag="name:GitHost input:RefreshButtons" placeholder="hostname.com:1234"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Repo Path</span>
-				<input class="column-elastic" gotag="name:GitPath input:RefreshButtons" placeholder="path/to/repository.git"></input>
+				<span class="cell w6em">Repo Path</span>
+				<input class="cell-elastic" gotag="name:GitPath input:RefreshButtons" placeholder="path/to/repository.git"></input>
 			</div>
 
 			<!-- TODO: Add a checkbox for ssh-key fingerprint acceptance -->
@@ -123,9 +123,9 @@ const initPastTemplate = `
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:UndoButton click:OnUndoButton" disabled>undo</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
+		<button class="cell material-icons" gotag="name:UndoButton click:OnUndoButton" disabled>undo</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
 	</div>
 </div>
 `

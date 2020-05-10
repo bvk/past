@@ -15,56 +15,56 @@ import (
 const pastTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">Password Store Status</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">Password Store Status</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column-lefty nowrap bold">Unknown Recipients</span>
+			<span class="cell-lefty nowrap bold">Unknown Recipients</span>
 		</div>
 
 		<ul>
 			<li gotag="name:MissingKeyTemplate" style="display:none">
 				<div class="row">
-					<span class="column-lefty" missing="name:KeyID"></span>
-					<span class="column-righty">Can read</span>
-					<span class="column" missing="name:FileCount"></span>
-					<span class="column">files</span>
+					<span class="cell-lefty" missing="name:KeyID"></span>
+					<span class="cell-righty">Can read</span>
+					<span class="cell" missing="name:FileCount"></span>
+					<span class="cell">files</span>
 				</div>
 			</li>
 		</ul>
 
 		<div class="row">
-			<span class="column-lefty nowrap bold">Recipients in Use</span>
+			<span class="cell-lefty nowrap bold">Recipients in Use</span>
 		</div>
 
 		<ul>
 			<li gotag="name:RecipientTemplate" style="display:none">
 				<div class="row">
-					<span class="column material-icons">360</span>
-					<span class="column-lefty" recipient="name:KeyID click:OnKeyID"></span>
-					<span class="column" recipient="name:ReadCount"></span>
-					<span class="column" recipient="name:Reason" style="display:none"></span>
-					<button class="column material-icons" recipient="name:RemoveButton click:OnRemove">delete</button>
+					<span class="cell material-icons">360</span>
+					<span class="cell-lefty" recipient="name:KeyID click:OnKeyID"></span>
+					<span class="cell" recipient="name:ReadCount"></span>
+					<span class="cell" recipient="name:Reason" style="display:none"></span>
+					<button class="cell material-icons" recipient="name:RemoveButton click:OnRemove">delete</button>
 				</div>
 			</li>
 		</ul>
 
 		<div class="row">
-			<span class="column-lefty nowrap bold">Available Recipients</span>
+			<span class="cell-lefty nowrap bold">Available Recipients</span>
 		</div>
 
 		<ul>
 			<li gotag="name:AvailableTemplate" style="display:none">
 				<div class="row">
-					<span class="column material-icons">360</span>
-					<span class="column-lefty" available="name:KeyID click:OnKeyID"></span>
-					<span class="column disabled" available="name:Reason" style="display:none"></span>
-					<button class="column material-icons" available="name:AddButton click:OnAdd">add</button>
+					<span class="cell material-icons">360</span>
+					<span class="cell-lefty" available="name:KeyID click:OnKeyID"></span>
+					<span class="cell disabled" available="name:Reason" style="display:none"></span>
+					<button class="cell material-icons" available="name:AddButton click:OnAdd">add</button>
 				</div>
 			</li>
 		</ul>
@@ -72,7 +72,7 @@ const pastTemplate = `
 	</div>
 
 	<div class="row footer">
-		<div class="column-elastic footer-status"></div>
+		<div class="cell-elastic footer-status"></div>
 	</div>
 </div>
 `

@@ -14,38 +14,38 @@ import (
 const viewTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title" gotag="name:Filename">Password File Name</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title" gotag="name:Filename">Password File Name</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column w6em">Username</span>
-			<input class="column-elastic" gotag="name:Username" readonly></input>
-			<button class="column material-icons" gotag="name:CopyUsername click:OnCopyUsername">content_copy</button>
+			<span class="cell w6em">Username</span>
+			<input class="cell-elastic" gotag="name:Username" readonly></input>
+			<button class="cell material-icons" gotag="name:CopyUsername click:OnCopyUsername">content_copy</button>
 		</div>
 
 		<div class="row">
-			<span class="column w6em">Password</span>
-			<input class="column-elastic" gotag="name:Password" type="password" readonly></input>
-			<button class="column material-icons" gotag="name:TogglePassword click:OnTogglePassword">visibility_off</button>
-			<button class="column material-icons" gotag="name:CopyPassword click:OnCopyPassword">content_copy</button>
+			<span class="cell w6em">Password</span>
+			<input class="cell-elastic" gotag="name:Password" type="password" readonly></input>
+			<button class="cell material-icons" gotag="name:TogglePassword click:OnTogglePassword">visibility_off</button>
+			<button class="cell material-icons" gotag="name:CopyPassword click:OnCopyPassword">content_copy</button>
 		</div>
 
 		<div>Other data</div>
 
 		<div class="row">
-			<textarea class="column-elastic h4em" gotag="name:UserData" readonly></textarea>
+			<textarea class="cell-elastic h4em" gotag="name:UserData" readonly></textarea>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:DeleteButton click:OnDeleteButton">delete</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:EditButton click:OnEditButton">edit</button>
+		<button class="cell material-icons" gotag="name:DeleteButton click:OnDeleteButton">delete</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:EditButton click:OnEditButton">edit</button>
 	</div>
 </div>
 `

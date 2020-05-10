@@ -14,17 +14,17 @@ import (
 const initRemoteTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">Setup Remote Repository</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">Setup Remote Repository</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column w6em">Provider</span>
-			<select class="column-elastic" gotag="name:GitServer change:RefreshButtons">
+			<span class="cell w6em">Provider</span>
+			<select class="cell-elastic" gotag="name:GitServer change:RefreshButtons">
 				<optgroup>
 					<option value="ssh">Custom Server using SSH protocol</option>
 					<option value="https">Custom Server using HTTPS protocol</option>
@@ -38,31 +38,31 @@ const initRemoteTemplate = `
 		</div>
 
 		<div class="row">
-			<span class="column w6em">Username</span>
-			<input class="column-elastic" gotag="name:GitUser input:RefreshButtons" placeholder="username"></input>
+			<span class="cell w6em">Username</span>
+			<input class="cell-elastic" gotag="name:GitUser input:RefreshButtons" placeholder="username"></input>
 		</div>
 
 		<div class="row">
-			<span class="column w6em">Password</span>
-			<input class="column-elastic" gotag="name:GitPass input:RefreshButtons" type="password" placeholder="leave empty for password-less authentication"></input>
-			<button class="column material-icons" gotag="name:ToggleGitPassButton click:OnToggleGitPass">visibility_off</button>
+			<span class="cell w6em">Password</span>
+			<input class="cell-elastic" gotag="name:GitPass input:RefreshButtons" type="password" placeholder="leave empty for password-less authentication"></input>
+			<button class="cell material-icons" gotag="name:ToggleGitPassButton click:OnToggleGitPass">visibility_off</button>
 		</div>
 
 		<div class="row">
-			<span class="column w6em">Hostname</span>
-			<input class="column-elastic" gotag="name:GitHost input:RefreshButtons" placeholder="hostname.com:1234"></input>
+			<span class="cell w6em">Hostname</span>
+			<input class="cell-elastic" gotag="name:GitHost input:RefreshButtons" placeholder="hostname.com:1234"></input>
 		</div>
 
 		<div class="row">
-			<span class="column w6em">Repo Path</span>
-			<input class="column-elastic" gotag="name:GitPath input:RefreshButtons" placeholder="path/to/repository.git"></input>
+			<span class="cell w6em">Repo Path</span>
+			<input class="cell-elastic" gotag="name:GitPath input:RefreshButtons" placeholder="path/to/repository.git"></input>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:UndoButton click:OnUndoButton" disabled>undo</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
+		<button class="cell material-icons" gotag="name:UndoButton click:OnUndoButton" disabled>undo</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
 	</div>
 </div>
 `

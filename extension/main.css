@@ -129,28 +129,6 @@ button:not(:disabled):hover {
 		vertical-align: bottom;
 }
 
-.column {
-		margin: 0.2rem;
-    white-space: nowrap;
-}
-
-.column-elastic {
-		flex-grow: 1;
-		margin: 0.2rem;
-}
-
-.column-righty {
-		flex-grow: 1;
-		margin: 0.2rem;
-		text-align: right;
-}
-
-.column-lefty {
-		flex-grow: 1;
-		margin: 0.2rem;
-		text-align: left;
-}
-
 .header {
 		margin: 0.2rem;
 		padding: 0.2rem;

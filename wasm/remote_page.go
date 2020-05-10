@@ -12,54 +12,54 @@ import (
 const remoteTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">Remote Repository Status</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">Remote Repository Status</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column-lefty bold">Local Tip</span>
+			<span class="cell-lefty bold">Local Tip</span>
 		</div>
 
 		<div class="row">
-			<span class="column-righty" gotag="name:LocalAuthorDate"></span>
+			<span class="cell-righty" gotag="name:LocalAuthorDate"></span>
 		</div>
 		<div class="row">
-			<span class="column-righty" gotag="name:LocalAuthor"></span>
+			<span class="cell-righty" gotag="name:LocalAuthor"></span>
 		</div>
 		<div class="row">
-			<span class="column-righty" gotag="name:LocalCommit"></span>
+			<span class="cell-righty" gotag="name:LocalCommit"></span>
 		</div>
 		<div class="row">
-			<span class="column-elastic" gotag="name:LocalTitle"></span>
-		</div>
-
-		<div class="row">
-			<span class="column-lefty bold">Remote Tip</span>
-			<button class="column material-icons" gotag="name:FetchButton click:OnFetchButton">refresh</button>
+			<span class="cell-elastic" gotag="name:LocalTitle"></span>
 		</div>
 
 		<div class="row">
-			<span class="column-righty text-right" gotag="name:RemoteAuthorDate"></span>
+			<span class="cell-lefty bold">Remote Tip</span>
+			<button class="cell material-icons" gotag="name:FetchButton click:OnFetchButton">refresh</button>
+		</div>
+
+		<div class="row">
+			<span class="cell-righty text-right" gotag="name:RemoteAuthorDate"></span>
 		</div>
 		<div class="row">
-			<span class="column-righty text-right" gotag="name:RemoteAuthor"></span>
+			<span class="cell-righty text-right" gotag="name:RemoteAuthor"></span>
 		</div>
 		<div class="row">
-			<span class="column-righty text-right" gotag="name:RemoteCommit"></span>
+			<span class="cell-righty text-right" gotag="name:RemoteCommit"></span>
 		</div>
 		<div class="row">
-			<span class="column-elastic" gotag="name:RemoteTitle"></span>
+			<span class="cell-elastic" gotag="name:RemoteTitle"></span>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:PushButton click:OnPushButton" disabled>cloud_upload</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:PullButton click:OnPullButton" disabled>cloud_download</button>
+		<button class="cell material-icons" gotag="name:PushButton click:OnPushButton" disabled>cloud_upload</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:PullButton click:OnPullButton" disabled>cloud_download</button>
 	</div>
 </div>
 `

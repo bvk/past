@@ -17,9 +17,9 @@ import (
 const editTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title" gotag="name:Title">New Password File</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title" gotag="name:Title">New Password File</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
@@ -27,18 +27,18 @@ const editTemplate = `
 	<div class="content mw32em">
 		<div>
 			<div class="row">
-				<div class="column w6em">Website</div>
-				<input class="column-lefty" gotag="name:Sitename input:RefreshButtons" type="text" placeholder="website name"></input>
+				<div class="cell w6em">Website</div>
+				<input class="cell-lefty" gotag="name:Sitename input:RefreshButtons" type="text" placeholder="website name"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Username</span>
-				<input class="column-lefty" gotag="name:Username input:RefreshButtons" type="text" placeholder="account name"></input>
+				<span class="cell w6em">Username</span>
+				<input class="cell-lefty" gotag="name:Username input:RefreshButtons" type="text" placeholder="account name"></input>
 			</div>
 
 			<div class="row">
-				<span class="column w6em">Password</span>
-				<select class="column-lefty" gotag="name:PasswordType change:OnPasswordType">
+				<span class="cell w6em">Password</span>
+				<select class="cell-lefty" gotag="name:PasswordType change:OnPasswordType">
 					<option value="">User Typed Password</option>
 					<option value="letters_numbers_symbols">Letters, Numbers, Symbols</option>
 					<option value="letters_numbers">Letters, Numbers</option>
@@ -46,28 +46,28 @@ const editTemplate = `
 					<option value="letters">Letters</option>
 					<option value="base64std">Standard Base64</option>
 				</select>
-				<span class="column" gotag="name:PasswordSize wheel:OnPasswordSize" style="text-decoration: line-through">12 Runes</span>
+				<span class="cell" gotag="name:PasswordSize wheel:OnPasswordSize" style="text-decoration: line-through">12 Runes</span>
 			</div>
 
 			<div class="row">
-				<input class="column-elastic password-element" gotag="name:Password input:RefreshButtons" type="password" placeholder="password"></input>
-				<input class="column-elastic password-element" gotag="name:RepeatPassword input:RefreshButtons" type="password" placeholder="retype password"></input>
-				<button class="column material-icons" gotag="name:TogglePassword click:OnTogglePassword">visibility_off</button>
-				<button class="column material-icons" gotag="name:CopyPassword click:OnCopyPassword" disabled>content_copy</button>
-				<button class="column material-icons" gotag="name:GeneratePassword click:OnGeneratePassword" disabled>refresh</button>
+				<input class="cell-elastic password-element" gotag="name:Password input:RefreshButtons" type="password" placeholder="password"></input>
+				<input class="cell-elastic password-element" gotag="name:RepeatPassword input:RefreshButtons" type="password" placeholder="retype password"></input>
+				<button class="cell material-icons" gotag="name:TogglePassword click:OnTogglePassword">visibility_off</button>
+				<button class="cell material-icons" gotag="name:CopyPassword click:OnCopyPassword" disabled>content_copy</button>
+				<button class="cell material-icons" gotag="name:GeneratePassword click:OnGeneratePassword" disabled>refresh</button>
 			</div>
 
 			<div>Other data</div>
 			<div class="row">
-				<textarea class="column-elastic h4em" gotag="name:UserData input:RefreshButtons"></textarea>
+				<textarea class="cell-elastic h4em" gotag="name:UserData input:RefreshButtons"></textarea>
 			</div>
 		</div>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:UndoButton click:OnUndoButton">undo</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
+		<button class="cell material-icons" gotag="name:UndoButton click:OnUndoButton">undo</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:DoneButton click:OnDoneButton" disabled>done</button>
 	</div>
 </div>
 `

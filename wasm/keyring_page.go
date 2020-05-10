@@ -13,61 +13,61 @@ import (
 const keyringTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">GPG Keyring</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">GPG Keyring</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
   <hr />
 
 	<div class="content mw32em">
 		<div class="row">
-			<span class="column-elastic bold nowrap">Local Keys (with Private Key)</span>
+			<span class="cell-elastic bold nowrap">Local Keys (with Private Key)</span>
 		</div>
 
 		<ul>
 			<li gotag="name:LocalKeyTemplate" style="display:none">
 				<div class="row">
-					<span class="column material-icons">360</span>
-					<span class="column-lefty" localkey="name:KeyID click:OnKeyID"></span>
-					<button class="column material-icons" localkey="name:ViewKey click:OnViewKey">navigate_next</button>
+					<span class="cell material-icons">360</span>
+					<span class="cell-lefty" localkey="name:KeyID click:OnKeyID"></span>
+					<button class="cell material-icons" localkey="name:ViewKey click:OnViewKey">navigate_next</button>
 				</div>
 			</li>
 		</ul>
 
 		<div class="row">
-			<span class="column-elastic bold nowrap">Remote Keys (without Private Key)</span>
+			<span class="cell-elastic bold nowrap">Remote Keys (without Private Key)</span>
 		</div>
 
 		<ul>
 			<li gotag="name:RemoteKeyTemplate" style="display:none">
 				<div class="row">
-					<span class="column material-icons">360</span>
-					<span class="column-lefty" remotekey="name:KeyID click:OnKeyID"></span>
-					<button class="column material-icons" remotekey="name:ViewKey click:OnViewKey">navigate_next</button>
+					<span class="cell material-icons">360</span>
+					<span class="cell-lefty" remotekey="name:KeyID click:OnKeyID"></span>
+					<button class="cell material-icons" remotekey="name:ViewKey click:OnViewKey">navigate_next</button>
 				</div>
 			</li>
 		</ul>
 
 		<div class="row">
-			<span class="column-elastic bold nowrap">Expired Keys</span>
+			<span class="cell-elastic bold nowrap">Expired Keys</span>
 		</div>
 
 		<ul>
 			<li gotag="name:ExpiredKeyTemplate" style="display:none">
 				<div class="row">
-					<span class="column material-icons">360</span>
-					<span class="column-lefty" expiredkey="name:KeyID click:OnKeyID"></span>
-					<button class="column material-icons" expiredkey="name:ViewKey click:OnViewKey">navigate_next</button>
+					<span class="cell material-icons">360</span>
+					<span class="cell-lefty" expiredkey="name:KeyID click:OnKeyID"></span>
+					<button class="cell material-icons" expiredkey="name:ViewKey click:OnViewKey">navigate_next</button>
 				</div>
 			</li>
 		</ul>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:AddButton click:OnAddButton">add</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:AddButton2 click:OnAddButton">add</button>
+		<button class="cell material-icons" gotag="name:AddButton click:OnAddButton">add</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:AddButton2 click:OnAddButton">add</button>
 	</div>
 </div>
 `

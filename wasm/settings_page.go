@@ -12,9 +12,9 @@ import (
 const settingsTemplate = `
 <div>
 	<div class="row header">
-		<button class="column material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
-		<span class="column-elastic header-title">Settings</span>
-		<button class="column material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
+		<button class="cell material-icons" gotag="name:BackButton click:OnBackButton">navigate_before</button>
+		<span class="cell-elastic header-title">Settings</span>
+		<button class="cell material-icons" gotag="name:CloseButton click:OnCloseButton">clear</button>
 	</div>
 
 	<hr/>
@@ -23,48 +23,48 @@ const settingsTemplate = `
 		<ul>
 			<li>
 				<div class="row">
-					<span class="column material-icons" gotag="name:MessagingIcon">clear</span>
-					<span class="column-lefty">Chrome Native Messaging</span>
+					<span class="cell material-icons" gotag="name:MessagingIcon">clear</span>
+					<span class="cell-lefty">Chrome Native Messaging</span>
 				</div>
 			</li>
 
 			<li>
 				<div class="row">
-					<span class="column material-icons" gotag="name:ToolsIcon">remove</span>
-					<span class="column-lefty">Git and GPG Commands</span>
+					<span class="cell material-icons" gotag="name:ToolsIcon">remove</span>
+					<span class="cell-lefty">Git and GPG Commands</span>
 				</div>
 			</li>
 
 			<li>
 				<div class="row">
-					<span class="column material-icons" gotag="name:KeysIcon">remove</span>
-					<span class="column-lefty">GPG Keyring</span>
-					<button class="column material-icons" disabled gotag="name:KeysButton click:OnKeysButton">create_new_folder</button>
+					<span class="cell material-icons" gotag="name:KeysIcon">remove</span>
+					<span class="cell-lefty">GPG Keyring</span>
+					<button class="cell material-icons" disabled gotag="name:KeysButton click:OnKeysButton">create_new_folder</button>
 				</div>
 			</li>
 
 			<li>
 				<div class="row">
-					<span class="column material-icons" gotag="name:RepoIcon">remove</span>
-					<span class="column-lefty">Password Store</span>
-					<button class="column material-icons" disabled gotag="name:RepoButton click:OnRepoButton">create_new_folder</button>
+					<span class="cell material-icons" gotag="name:RepoIcon">remove</span>
+					<span class="cell-lefty">Password Store</span>
+					<button class="cell material-icons" disabled gotag="name:RepoButton click:OnRepoButton">create_new_folder</button>
 				</div>
 			</li>
 
 			<li>
 				<div class="row">
-					<span class="column material-icons" gotag="name:RemoteIcon">remove</span>
-					<span class="column-lefty">Remote Repository</span>
-					<button class="column material-icons" disabled gotag="name:RemoteButton click:OnRemoteButton">create_new_folder</button>
+					<span class="cell material-icons" gotag="name:RemoteIcon">remove</span>
+					<span class="cell-lefty">Remote Repository</span>
+					<button class="cell material-icons" disabled gotag="name:RemoteButton click:OnRemoteButton">create_new_folder</button>
 				</div>
 			</li>
 		</ul>
 	</div>
 
 	<div class="row footer">
-		<button class="column material-icons" gotag="name:CheckButton click:OnCheckButton">refresh</button>
-		<div class="column-elastic footer-status"></div>
-		<button class="column material-icons" gotag="name:CheckButton2 click:OnCheckButton">refresh</button>
+		<button class="cell material-icons" gotag="name:CheckButton click:OnCheckButton">refresh</button>
+		<div class="cell-elastic footer-status"></div>
+		<button class="cell material-icons" gotag="name:CheckButton2 click:OnCheckButton">refresh</button>
 	</div>
 </div>
 `
