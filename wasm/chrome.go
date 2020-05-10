@@ -244,7 +244,7 @@ func SetItem(key, val string) error {
 	item := map[string]interface{}{
 		key: val,
 	}
-	local.Call("get", js.ValueOf(item), cb)
+	local.Call("set", js.ValueOf(item), cb)
 	<-resp
 	return nil
 }

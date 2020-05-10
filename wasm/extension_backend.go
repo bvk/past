@@ -101,8 +101,8 @@ func (e *ExtensionBackend) GetItem(key string) (string, bool) {
 		return "", false
 	}
 	m := make(map[string]string)
-	if err := js2go(v, m); err != nil {
-		log.Printf("error: could not convert %q to %T", js2str(v), m)
+	if err := js2go(v, &m); err != nil {
+		log.Printf("error: could not convert %q to %T: %w", js2str(v), m, err)
 		return "", false
 	}
 	if val, ok := m[key]; ok {

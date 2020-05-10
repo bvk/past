@@ -73,9 +73,9 @@ func doMain() error {
 	// Add context menu entries if backend supports context menus. Context menus
 	// are supported if we are running as a chrome/chromium extension.
 	if cm, ok := backend.(ContextMenuSupport); ok && listFiles != nil {
-		idMap, err := createOrUpdateMenus(cm, listFiles.Files, ctl.MenuIDMap())
-		if err := ctl.UpdateMenuIDMap(idMap); err != nil {
-			return xerrors.Errorf("could not update menu id map: %w", err)
+		ids, err := createOrUpdateMenus(cm, listFiles.Files, ctl.MenuIDs())
+		if err := ctl.UpdateMenuIDs(ids); err != nil {
+			return xerrors.Errorf("could not update menu ids: %w", err)
 		}
 		if err != nil {
 			return xerrors.Errorf("could not add context menus: %w", err)
@@ -100,14 +100,19 @@ func doMain() error {
 	return nil
 }
 
-func createOrUpdateMenus(cm ContextMenuSupport, files []string, oldIDMap map[string]string) (map[string]string, error) {
+func createOrUpdateMenus(cm ContextMenuSupport, files, oldMenuIDs []string) ([]string, error) {
 	contexts := []string{"editable"}
 
-	idMap := make(map[string]string)
+	oldIDMap := make(map[string]struct{})
+	for _, id := range oldMenuIDs {
+		oldIDMap[id] = struct{}{}
+	}
+
+	var newIDs []string
 	for _, file := range files {
 		file := file
 		if _, ok := oldIDMap[file]; ok {
-			idMap[file] = file
+			newIDs = append(newIDs, file)
 			continue
 		}
 		patterns, err := siteURLPatterns(file)
@@ -115,9 +120,9 @@ func createOrUpdateMenus(cm ContextMenuSupport, files []string, oldIDMap map[str
 			continue
 		}
 		if err := cm.AddContextMenu(file, file, contexts, patterns); err != nil {
-			return idMap, xerrors.Errorf("could not create or update context menu for %q: %w", file, err)
+			return newIDs, xerrors.Errorf("could not create or update context menu for %q: %w", file, err)
 		}
-		idMap[file] = file
+		newIDs = append(newIDs, file)
 		log.Printf("added context menu %q to pages %v", file, patterns)
 	}
 
@@ -136,7 +141,7 @@ func createOrUpdateMenus(cm ContextMenuSupport, files []string, oldIDMap map[str
 		}
 	}
 
-	return idMap, nil
+	return newIDs, nil
 }
 
 func siteURLPatterns(filename string) ([]string, error) {

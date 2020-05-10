@@ -91,7 +91,10 @@ function getPassword(menu, tab) {
 };
 
 chrome.runtime.onInstalled.addListener(function() {
-  console.log("chrome onInstalled called")
+  console.log(new Date(), "clearing the extension state due to onInstalled event");
+  chrome.storage.local.clear(function() {
+    console.log(new Date(), "cleared the extension state from the past");
+  });
 });
 
 chrome.contextMenus.onClicked.addListener(getPassword);

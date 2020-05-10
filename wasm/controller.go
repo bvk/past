@@ -35,7 +35,8 @@ type Browser interface {
 
 type State struct {
 	UseCountMap map[string]int
-	MenuIDMap   map[string]string
+
+	MenuIDs []string
 }
 
 type Controller struct {
@@ -91,7 +92,6 @@ func (c *Controller) getState() (*State, error) {
 		log.Println("found no persistent state saved previously")
 		s := &State{
 			UseCountMap: make(map[string]int),
-			MenuIDMap:   make(map[string]string),
 		}
 		return s, nil
 	}
@@ -99,7 +99,7 @@ func (c *Controller) getState() (*State, error) {
 	if err := json.NewDecoder(strings.NewReader(data)).Decode(state); err != nil {
 		return nil, err
 	}
-	log.Println("last persistent state", data)
+	log.Printf("last persistent state has %d use count entries and %d menu ids", len(state.UseCountMap), len(state.MenuIDs))
 	return state, nil
 }
 
@@ -122,16 +122,13 @@ func (c *Controller) UpdateUseCount(useMap map[string]int) error {
 	return nil
 }
 
-func (c *Controller) MenuIDMap() map[string]string {
-	return c.state.MenuIDMap
+func (c *Controller) MenuIDs() []string {
+	return append([]string{}, c.state.MenuIDs...)
 }
 
-func (c *Controller) UpdateMenuIDMap(menuMap map[string]string) error {
-	dupMap := make(map[string]string)
-	for k, v := range menuMap {
-		dupMap[k] = v
-	}
-	c.state.MenuIDMap = dupMap
+func (c *Controller) UpdateMenuIDs(menuIDs []string) error {
+	ids := append([]string{}, menuIDs...)
+	c.state.MenuIDs = ids
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(c.state); err != nil {
 		return xerrors.Errorf("could not encode persistent state: %w", err)
