@@ -65,3 +65,33 @@ function copyString(password, timeout, callback) {
   }
   return true
 }
+
+// Inserts password into the currently focused input element in the tab.
+function insertPassword(tab, password) {
+  chrome.tabs.executeScript(tab.id, {
+    code: "if (document.activeElement.tagName == 'input') {\
+               document.activeElement.value = '"+password+"';\
+             } else {\
+               document.execCommand('insertText', true, '"+password+"');\
+             }",
+  });
+};
+
+// Query the backend for the password associated with the context menu item.
+function getPassword(menu, tab) {
+  console.log("insert password for ", menu, " in tab ", tab);
+  let req = {view_file:{filename:menu.menuItemId}};
+  callBackend(req, function(resp) {
+    if (!resp || resp.status != "") {
+      console.log("could not retrieve the password for ", menu.menuItemId);
+      return;
+    }
+    insertPassword(tab, resp.view_file.password);
+  });
+};
+
+chrome.runtime.onInstalled.addListener(function() {
+  console.log("chrome onInstalled called")
+});
+
+chrome.contextMenus.onClicked.addListener(getPassword);
