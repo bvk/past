@@ -94,6 +94,7 @@ type Response struct {
 }
 
 type CheckStatusRequest struct {
+	ListFiles bool `json:"list_files"`
 }
 
 type CheckStatusResponse struct {
@@ -107,6 +108,8 @@ type CheckStatusResponse struct {
 	PasswordStoreKeys []string `json:"password_store_keys"`
 
 	Remote string `json:"remote"`
+
+	ListFiles *ListFilesResponse `json:"list_files"`
 }
 
 type CreateRepoRequest struct {
@@ -539,6 +542,14 @@ func (h *Handler) doCheckStatus(ctx context.Context, req *CheckStatusRequest, re
 	}
 	if h.pstore != nil {
 		resp.PasswordStoreKeys, _ = h.pstore.FileKeys(".")
+	}
+	if h.pstore != nil && req.ListFiles {
+		lsReq := new(ListFilesRequest)
+		lsResp := new(ListFilesResponse)
+		if err := h.doListFiles(ctx, lsReq, lsResp); err != nil {
+			return xerrors.Errorf("could not list files after the status check: %w", err)
+		}
+		resp.ListFiles = lsResp
 	}
 	return nil
 }
