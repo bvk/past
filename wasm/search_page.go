@@ -132,7 +132,7 @@ func NewSearchPage(ctl *Controller, data *msg.ListFilesResponse, usageMap map[st
 		data:        data,
 		usageMap:    newMap,
 		minListSize: 6,
-		maxListSize: 12,
+		maxListSize: 8,
 		items:       make(map[string]*SearchItem),
 	}
 
