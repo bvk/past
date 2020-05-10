@@ -324,7 +324,11 @@ func (p *SearchPage) getActiveTabHostSuffixes() ([]string, error) {
 		}
 	}
 
-	// TODO: split hostnames
+	var suffixes []string
+	words := strings.Split(hostname, ".")
+	for ii := 0; ii < len(words)-1; ii++ {
+		suffixes = append(suffixes, strings.Join(words[ii:], "."))
+	}
 
-	return []string{hostname}, nil
+	return suffixes, nil
 }
