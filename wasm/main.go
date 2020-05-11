@@ -159,7 +159,7 @@ func siteURLPatterns(filename string) ([]string, error) {
 	}
 	var patterns []string
 	for ii := 0; ii < len(words)-1; ii++ {
-		pattern := fmt.Sprintf("https://%s/*", strings.Join(words[ii:], "."))
+		pattern := fmt.Sprintf("https://*.%s/*", strings.Join(words[ii:], "."))
 		patterns = append(patterns, pattern)
 	}
 	return patterns, nil
