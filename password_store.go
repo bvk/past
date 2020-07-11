@@ -136,20 +136,30 @@ func New(store *git.Dir, keyring *gpg.Keyring) (*PasswordStore, error) {
 
 	skeyMap := make(map[string]*gpg.SecretKey)
 	for _, skey := range keyring.SecretKeys() {
+		l := len(skey.Fingerprint)
+		shortKeyID := skey.Fingerprint[l-8 : l]
+		longKeyID := skey.Fingerprint[l-16 : l]
 		skeyMap[skey.Fingerprint] = skey
-		skeyMap[skey.KeyID] = skey
+		skeyMap[shortKeyID] = skey
+		skeyMap[longKeyID] = skey
 	}
 
 	gpgKeyMap := make(map[string]*PublicKeyData)
 	for _, pkey := range keyring.PublicKeys() {
+		l := len(pkey.Fingerprint)
+		shortKeyID := pkey.Fingerprint[l-8 : l]
+		longKeyID := pkey.Fingerprint[l-16 : l]
+
 		if skey, ok := skeyMap[pkey.Fingerprint]; ok {
 			v := ToPublicKeyData(pkey, skey)
 			gpgKeyMap[pkey.Fingerprint] = v
-			gpgKeyMap[pkey.KeyID] = v
+			gpgKeyMap[shortKeyID] = v
+			gpgKeyMap[longKeyID] = v
 		} else {
 			v := ToPublicKeyData(pkey, nil)
 			gpgKeyMap[pkey.Fingerprint] = v
-			gpgKeyMap[pkey.KeyID] = v
+			gpgKeyMap[shortKeyID] = v
+			gpgKeyMap[longKeyID] = v
 		}
 	}
 
@@ -346,10 +356,15 @@ func (ps *PasswordStore) FileKeys(path string) ([]string, error) {
 	return append([]string{}, keys...), nil
 }
 
+// Reinit reencrypts all entires in the password store with new keys identified
+// by the input fingerprints. If input fingerprints is empty, then all files
+// will be scanned and removed of unknown-recipients. TODO: What to do if an
+// entry is encrypted with keys but none of their public keys are available?
 func (ps *PasswordStore) Reinit(directory string, fingerprints []string, nskip int) error {
 	dirPath := filepath.Clean(filepath.Join(ps.store.RootDir(), directory))
 
-	msg := fmt.Sprintf("Reinitialized the store with keys %q.", fingerprints)
+	// TODO: We must split len(fingerprints) == 0 case into a separate function.
+
 	cb := func() error {
 		for _, file := range ps.gitFiles {
 			if !strings.HasSuffix(file, ".gpg") {
@@ -360,6 +375,27 @@ func (ps *PasswordStore) Reinit(directory string, fingerprints []string, nskip i
 				log.Printf("file %q is skipped cause it is not in the directory %q", file, directory)
 				continue
 			}
+
+			fps := fingerprints
+			if len(fps) == 0 {
+				fullPath := filepath.Join(dirPath, file)
+				ids, err := gpg.GetRecipients(fullPath)
+				if err != nil {
+					return xerrors.Errorf("could not determine recipients for %q: %w", file, err)
+				}
+				for _, id := range ids {
+					if pkey, ok := ps.gpgKeyMap[id]; ok {
+						fps = append(fps, pkey.KeyFingerprint)
+					}
+				}
+				if len(fps) == len(ids) {
+					return nil
+				}
+				if len(fps) == 0 {
+					return xerrors.Errorf("no known public keys for %q: %w", file, os.ErrInvalid)
+				}
+			}
+
 			// Read the file, decrypt the content and reencrypt it with new fingerprints.
 			oldEncrypted, err := ps.store.ReadFile(file)
 			if err != nil {
@@ -371,7 +407,7 @@ func (ps *PasswordStore) Reinit(directory string, fingerprints []string, nskip i
 					return xerrors.Errorf("could not decrypt file %q: %w", file, err)
 				}
 			}
-			newEncrypted, err := ps.keyring.Encrypt(decrypted, fingerprints)
+			newEncrypted, err := ps.keyring.Encrypt(decrypted, fps)
 			if err != nil {
 				return xerrors.Errorf("could not reencrypt file %q: %w", file, err)
 			}
@@ -379,13 +415,36 @@ func (ps *PasswordStore) Reinit(directory string, fingerprints []string, nskip i
 				return xerrors.Errorf("could not update file %q: %w", file, err)
 			}
 		}
-		// Also update the .gpg-id file.
+
+		// Also update or cleanup the .gpg-id file.
 		idFile := filepath.Clean(filepath.Join(directory, ".gpg-id"))
-		content := strings.Join(fingerprints, "\n") + "\n"
-		if err := ps.store.UpdateFile(idFile, []byte(content)); err != nil {
-			return xerrors.Errorf("could not update the gpg ids file %q: %w", idFile, err)
+		if len(fingerprints) > 0 {
+			content := strings.Join(fingerprints, "\n") + "\n"
+			if err := ps.store.UpdateFile(idFile, []byte(content)); err != nil {
+				return xerrors.Errorf("could not update the gpg ids file %q: %w", idFile, err)
+			}
+		} else {
+			idFile := filepath.Clean(filepath.Join(directory, ".gpg-id"))
+			data, err := ps.store.ReadFile(idFile)
+			if err != nil {
+				return xerrors.Errorf("could not read gpg ids file %q: %w", idFile, err)
+			}
+			keys := []string{}
+			for _, id := range strings.Fields(string(data)) {
+				if _, ok := ps.gpgKeyMap[id]; ok {
+					keys = append(keys, id)
+				}
+			}
+			content := strings.Join(keys, "\n") + "\n"
+			if err := ps.store.UpdateFile(idFile, []byte(content)); err != nil {
+				return xerrors.Errorf("could not update the gpg ids file %q: %w", idFile, err)
+			}
 		}
 		return nil
+	}
+	msg := fmt.Sprintf("Reinitialized the store with keys %q.", fingerprints)
+	if len(fingerprints) == 0 {
+		msg = fmt.Sprintf("Cleaned up entries encrypted with missing public keys.")
 	}
 	if err := ps.store.Apply(msg, cb); err != nil {
 		return xerrors.Errorf("could not reinitialize the directory %q: %w", directory, err)

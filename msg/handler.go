@@ -953,18 +953,26 @@ func (h *Handler) doRemoveRecipient(ctx context.Context, req *RemoveRecipientReq
 		return xerrors.Errorf("could not determine current gpg ids: %w", err)
 	}
 	var newKeys []string
-	for _, key := range keys {
-		if key == req.Fingerprint {
-			continue
+	if len(req.Fingerprint) > 0 {
+		for _, key := range keys {
+			if key == req.Fingerprint {
+				continue
+			}
+			newKeys = append(newKeys, key)
 		}
-		newKeys = append(newKeys, key)
 	}
 	if len(newKeys) == len(keys) {
 		return xerrors.Errorf("key %q is not a recipient: %w", req.Fingerprint, os.ErrExist)
 	}
 	// TODO: We should add support for directories.
-	if err := h.pstore.Reinit("", newKeys, req.NumSkip); err != nil {
-		return xerrors.Errorf("could not reinitialize with a recipient removed: %w", err)
+	if len(newKeys) > 0 {
+		if err := h.pstore.Reinit("", newKeys, req.NumSkip); err != nil {
+			return xerrors.Errorf("could not reinitialize with a recipient removed: %w", err)
+		}
+	} else {
+		if err := h.pstore.Reinit("", nil, req.NumSkip); err != nil {
+			return xerrors.Errorf("could not reinitialize with a recipient removed: %w", err)
+		}
 	}
 	// Repo and pstore must be updated.
 	if repo, err := git.NewDir(h.dir); err != nil {

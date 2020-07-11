@@ -25,6 +25,7 @@ const pastTemplate = `
 	<div class="content mw32em">
 		<div class="row">
 			<span class="cell-lefty nowrap bold">Unknown Recipients</span>
+			<button class="cell material-icons" gotag="name:RemoveUnknownButton click:OnRemoveUnknownButton">cleaning_services</button>
 		</div>
 
 		<ul>
@@ -86,6 +87,8 @@ type PastPage struct {
 
 	BackButton, CloseButton *dom.HTMLButtonElement
 
+	RemoveUnknownButton *dom.HTMLButtonElement
+
 	MissingKeyTemplate, RecipientTemplate, AvailableTemplate *dom.HTMLLIElement
 }
 
@@ -118,6 +121,7 @@ func (p *PastPage) RefreshDisplay() error {
 		p.AvailableTemplate.ParentNode().RemoveChild(n)
 	}
 
+	numMissing := len(p.data.MissingKeyFileCountMap)
 	for keyid, count := range p.data.MissingKeyFileCountMap {
 		clone := mustCloneHTMLElement(p.MissingKeyTemplate, true)
 
@@ -131,6 +135,9 @@ func (p *PastPage) RefreshDisplay() error {
 		clone.Style().RemoveProperty("display")
 		p.MissingKeyTemplate.ParentNode().InsertBefore(clone, p.MissingKeyTemplate.NextSibling())
 	}
+	if numMissing == 0 {
+		p.RemoveUnknownButton.SetDisabled(true)
+	}
 
 	for fp, count := range p.data.KeyFileCountMap {
 		clone := mustCloneHTMLElement(p.RecipientTemplate, true)
@@ -142,6 +149,9 @@ func (p *PastPage) RefreshDisplay() error {
 		}
 		k.KeyID.SetTextContent(key.UserName)
 		k.ReadCount.SetTextContent(fmt.Sprintf("%d/%d", count, p.data.NumFiles))
+		if numMissing > 0 || len(p.data.KeyFileCountMap) == 1 {
+			k.RemoveButton.SetDisabled(true)
+		}
 
 		clone.Style().RemoveProperty("display")
 		p.RecipientTemplate.ParentNode().InsertBefore(clone, p.RecipientTemplate.NextSibling())
@@ -155,7 +165,11 @@ func (p *PastPage) RefreshDisplay() error {
 			return p.ctl.setError(err)
 		}
 		k.KeyID.SetTextContent(key.UserName)
-		if !key.IsTrusted {
+		if numMissing > 0 {
+			k.Reason.SetTextContent("unknown-recipients")
+			k.Reason.Style().RemoveProperty("display")
+			k.AddButton.SetDisabled(true)
+		} else if !key.IsTrusted {
 			k.Reason.SetTextContent("untrusted")
 			k.Reason.Style().RemoveProperty("display")
 			k.AddButton.SetDisabled(true)
@@ -180,6 +194,24 @@ func (p *PastPage) OnBackButton(dom.Event) (status error) {
 
 func (p *PastPage) OnCloseButton(dom.Event) (status error) {
 	return p.ctl.ClosePage(p)
+}
+
+func (p *PastPage) OnRemoveUnknownButton(dom.Event) (status error) {
+	nreadable := p.numReadable()
+	req := &msg.RemoveRecipientRequest{
+		ScanStore: true,
+		NumSkip:   p.data.NumFiles - nreadable,
+	}
+
+	bs := StartBusy(p.root)
+	resp, err := p.ctl.RemoveRecipient(req)
+	StopBusy(bs)
+
+	if err != nil {
+		return p.ctl.setError(err)
+	}
+	p.data = resp.ScanStore
+	return p.RefreshDisplay()
 }
 
 func (p *PastPage) numReadable() int {
